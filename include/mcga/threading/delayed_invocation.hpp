@@ -9,11 +9,9 @@
 namespace mcga::threading {
 
 class DelayedInvocation {
- private:
+ public:
     typedef std::chrono::steady_clock Clock;
     typedef std::chrono::nanoseconds Delay;
-
- public:
     typedef std::shared_ptr<DelayedInvocation> DelayedInvocationPtr;
 
     bool isCancelled() const;

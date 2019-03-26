@@ -8,6 +8,7 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 add_library(mcga_threading STATIC
     src/delayed_invocation.cpp
+    src/event_loop.cpp
 )
 target_include_directories(mcga_threading PUBLIC include)
 

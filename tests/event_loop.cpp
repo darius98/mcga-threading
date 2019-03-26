@@ -59,14 +59,14 @@ TEST_CASE(EventLoop, "EventLoop") {
         // This is done in set-up, tear-down. The only condition is time-out.
     });
 
-    test("getNumPendingJobs() is zero initially", [&] {
-        expect(loop->getNumPendingJobs(), isZero);
+    test("size() is zero initially", [&] {
+        expect(loop->size(), isZero);
     });
 
     test("Enqueueing an executable executes it", [&] {
         int x = 0;
         loop->enqueue([&]{ x += 1; });
-        while (loop->getNumPendingJobs() > 0) {
+        while (loop->size() > 0) {
             this_thread::sleep_for(1ms);
         }
         expect(x, isEqualTo(1));
@@ -75,7 +75,7 @@ TEST_CASE(EventLoop, "EventLoop") {
     test("Enqueueing an executable delayed executes it", [&] {
         int x = 0;
         loop->enqueueDelayed([&]{ x += 1; }, 1ms);
-        while (loop->getNumPendingJobs() > 0) {
+        while (loop->size() > 0) {
             this_thread::sleep_for(1ms);
         }
         expect(x, isEqualTo(1));
@@ -114,7 +114,7 @@ TEST_CASE(EventLoop, "EventLoop") {
             workers[i]->join();
             delete workers[i];
         }
-        while (loop->getNumPendingJobs() > 0) {
+        while (loop->size() > 0) {
             this_thread::sleep_for(1ms);
         }
         expect(x, isEqualTo(numWorkers * numJobsPerWorker));
@@ -257,7 +257,7 @@ TEST_CASE(EventLoop, "EventLoop") {
         loop->enqueueDelayed([&] { y = 1; }, 5ms);
 
         this_thread::sleep_for(10ms);
-        while (loop->getNumPendingJobs() > 0) {
+        while (loop->size() > 0) {
             this_thread::sleep_for(1ms);
         }
 
