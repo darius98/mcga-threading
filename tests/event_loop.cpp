@@ -164,13 +164,13 @@ TEST_CASE(EventLoop, "EventLoop") {
     test("Cancelling an interval", [&] {
         int x = 0;
 
-        auto invocation = loop->enqueueInterval([&] { x += 1; }, 1000us);
+        auto invocation = loop->enqueueInterval([&] { x += 1; }, 50ms);
 
-        this_thread::sleep_for(3050us);
+        this_thread::sleep_for(180ms);
 
         invocation->cancel();
 
-        this_thread::sleep_for(10000us);
+        this_thread::sleep_for(200ms);
         expect(x, isEqualTo(3));
     });
 

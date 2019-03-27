@@ -6,12 +6,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
+include(FindThreads)
+
 add_library(mcga_threading STATIC
     src/delayed_invocation.cpp
     src/event_loop.cpp
     src/event_loop_thread.cpp
 )
 target_include_directories(mcga_threading PUBLIC include)
+target_link_libraries(mcga_threading PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 install(DIRECTORY include DESTINATION .)
 
@@ -20,6 +23,8 @@ if (BuildTests)
     enable_testing()
 
     add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
+
+    link_directories(/usr/local/lib)
 
     function (add_kktest TEST_NAME)
         add_executable(${TEST_NAME}_test ${ARGN})
