@@ -13,18 +13,9 @@ class EventLoop {
  public:
     EventLoop() = default;
 
-    template<class _Rep, class _Ratio>
-    explicit EventLoop(const std::chrono::duration<_Rep, _Ratio>& tick) {
-        setTick(tick);
-    }
-
-    template<class _Rep, class _Ratio>
-    void setTick(const std::chrono::duration<_Rep, _Ratio>& _tick) {
-        tick = std::chrono::duration_cast<std::chrono::nanoseconds>(_tick);
-    }
-
     std::size_t size() const;
 
+    bool isRunning() const;
     void start();
     void stop();
 
@@ -72,10 +63,12 @@ class EventLoop {
 
     void executePending();
 
+    std::size_t getImmediateQueueSize() const;
+    std::size_t getDelayedQueueSize() const;
+
     DelayedInvocationPtr popDelayedQueue();
     Executable popImmediateQueue();
 
-    std::atomic<std::chrono::nanoseconds> tick = std::chrono::nanoseconds(20);
     std::atomic_bool running = false;
 
     mutable std::mutex immediateQueueLock;

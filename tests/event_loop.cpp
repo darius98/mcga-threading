@@ -40,9 +40,14 @@ TEST_CASE(EventLoop, "EventLoop") {
 
     setUp([&] {
         loop = new EventLoop();
+        atomic_bool started;
         eventLoopThread = new thread([&] {
+            started = true;
             loop->start();
         });
+        while (!started) {
+            this_thread::sleep_for(1ns);
+        }
         // This sleep is to make sure the event loop thread's start() call is
         // executed before the testing thread's stop() call.
         this_thread::sleep_for(1ms);

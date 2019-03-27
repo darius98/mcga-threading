@@ -11,19 +11,11 @@ class EventLoopThread {
  public:
     EventLoopThread() = default;
 
-    template<class _Rep, class _Ratio>
-    explicit EventLoopThread(
-            const std::chrono::duration<_Rep, _Ratio>& tick): loop(tick) {}
-
     ~EventLoopThread();
-
-    template<class _Rep, class _Ratio>
-    void setTick(const std::chrono::duration<_Rep, _Ratio>& tick) {
-        loop.setTick(tick);
-    }
 
     std::size_t size() const;
 
+    bool isRunning() const;
     void start();
     void stop();
 

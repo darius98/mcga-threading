@@ -2,22 +2,25 @@
 
 using std::lock_guard;
 using std::move;
-using std::scoped_lock;
 using std::size_t;
 using std::this_thread::sleep_for;
+using namespace std::literals::chrono_literals;
 
 namespace mcga::threading {
 
 size_t EventLoop::size() const {
-    scoped_lock guard(immediateQueueLock, delayedQueueLock);
-    return immediateQueue.size() + delayedQueue.size();
+    return getImmediateQueueSize() + getDelayedQueueSize();
+}
+
+bool EventLoop::isRunning() const {
+    return running;
 }
 
 void EventLoop::start() {
     running = true;
     while (running) {
         executePending();
-        sleep_for(tick);
+        sleep_for(20ns);
     }
 }
 
@@ -64,6 +67,11 @@ void EventLoop::executePending() {
     } while (executed);
 }
 
+size_t EventLoop::getDelayedQueueSize() const {
+    lock_guard guard(delayedQueueLock);
+    return delayedQueue.size();
+}
+
 DelayedInvocationPtr EventLoop::popDelayedQueue() {
     lock_guard guard(delayedQueueLock);
     if (delayedQueue.empty()) {
@@ -75,6 +83,11 @@ DelayedInvocationPtr EventLoop::popDelayedQueue() {
     }
     delayedQueue.pop();
     return top;
+}
+
+size_t EventLoop::getImmediateQueueSize() const {
+    lock_guard guard(immediateQueueLock);
+    return immediateQueue.size();
 }
 
 Executable EventLoop::popImmediateQueue() {
