@@ -13,10 +13,20 @@ add_library(mcga_threading STATIC
     src/event_loop.cpp
     src/event_loop_thread.cpp
 )
+target_include_directories(mcga_threading PUBLIC third_party/concurrentqueue)
+target_include_directories(mcga_threading PUBLIC third_party/readerwriterqueue)
 target_include_directories(mcga_threading PUBLIC include)
 target_link_libraries(mcga_threading PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 install(DIRECTORY include DESTINATION .)
+install(FILES third_party/concurrentqueue/concurrentqueue.h
+                      DESTINATION include/concurrentqueue.h)
+install(FILES third_party/concurrentqueue/blockingconcurrentqueue.h
+                      DESTINATION include/blockingconcurrentqueue.h)
+install(FILES third_party/readerwriterqueue/readerwriterqueue.h
+                        DESTINATION include/readerwriterqueue.h)
+install(FILES third_party/readerwriterqueue/atomicops.h
+                        DESTINATION include/atomicops.h)
 
 option(BuildTests "Build tests using the KKTest library" OFF)
 if (BuildTests)

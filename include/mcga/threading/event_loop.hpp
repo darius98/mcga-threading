@@ -4,6 +4,8 @@
 #include <queue>
 #include <thread>
 
+#include <concurrentqueue.h>
+
 #include "delayed_invocation.hpp"
 #include "executable.hpp"
 
@@ -11,7 +13,7 @@ namespace mcga::threading {
 
 class EventLoop {
  public:
-    EventLoop() = default;
+    EventLoop();
 
     std::size_t size() const;
 
@@ -63,16 +65,15 @@ class EventLoop {
 
     void executePending();
 
-    std::size_t getImmediateQueueSize() const;
     std::size_t getDelayedQueueSize() const;
-
     DelayedInvocationPtr popDelayedQueue();
-    Executable popImmediateQueue();
 
     std::atomic_bool running = false;
 
-    mutable std::mutex immediateQueueLock;
-    std::queue<Executable> immediateQueue;
+    moodycamel::ConcurrentQueue<Executable> immediateQueue;
+    moodycamel::ConsumerToken immediateQueueToken;
+    Executable* immediateQueueBuffer = new Executable[10];
+    std::size_t immediateQueueBufferSize = 10;
 
     mutable std::mutex delayedQueueLock;
     std::priority_queue<DelayedInvocationPtr,

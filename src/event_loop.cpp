@@ -4,12 +4,15 @@ using std::lock_guard;
 using std::move;
 using std::size_t;
 using std::this_thread::sleep_for;
+using std::vector;
 using namespace std::literals::chrono_literals;
 
 namespace mcga::threading {
 
+EventLoop::EventLoop(): immediateQueueToken(immediateQueue) {}
+
 size_t EventLoop::size() const {
-    return getImmediateQueueSize() + getDelayedQueueSize();
+    return immediateQueue.size_approx() + getDelayedQueueSize();
 }
 
 bool EventLoop::isRunning() const {
@@ -29,13 +32,11 @@ void EventLoop::stop() {
 }
 
 void EventLoop::enqueue(const Executable& func) {
-    lock_guard guard(immediateQueueLock);
-    immediateQueue.push(func);
+    immediateQueue.enqueue(func);
 }
 
 void EventLoop::enqueue(Executable&& func) {
-    lock_guard guard(immediateQueueLock);
-    immediateQueue.push(move(func));
+    immediateQueue.enqueue(move(func));
 }
 
 DelayedInvocationPtr EventLoop::enqueue(DelayedInvocationPtr invocation) {
@@ -58,10 +59,21 @@ void EventLoop::executePending() {
             }
             executed = true;
         } else {
-            auto immediateInvocation = popImmediateQueue();
-            if (immediateInvocation != nullptr) {
-                immediateInvocation();
-                executed = true;
+            auto immediateQueueSize = immediateQueue.size_approx();
+            if (immediateQueueSize > 0) {
+                if (immediateQueueSize > immediateQueueBufferSize) {
+                    immediateQueueBufferSize = immediateQueueSize;
+                    immediateQueueBuffer = static_cast<Executable*>(
+                        realloc(immediateQueueBuffer, immediateQueueSize));
+                }
+                auto numDequeued = immediateQueue.try_dequeue_bulk(
+                        immediateQueueToken,
+                        immediateQueueBuffer,
+                        immediateQueueBufferSize);
+                for (size_t i = 0; i < numDequeued; ++ i) {
+                    immediateQueueBuffer[i]();
+                }
+                executed = numDequeued > 0;
             }
         }
     } while (executed);
@@ -82,21 +94,6 @@ DelayedInvocationPtr EventLoop::popDelayedQueue() {
         return nullptr;
     }
     delayedQueue.pop();
-    return top;
-}
-
-size_t EventLoop::getImmediateQueueSize() const {
-    lock_guard guard(immediateQueueLock);
-    return immediateQueue.size();
-}
-
-Executable EventLoop::popImmediateQueue() {
-    lock_guard guard(immediateQueueLock);
-    if (immediateQueue.empty()) {
-        return nullptr;
-    }
-    auto top = immediateQueue.front();
-    immediateQueue.pop();
     return top;
 }
 
