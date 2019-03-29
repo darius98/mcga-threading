@@ -29,15 +29,16 @@ install(FILES third_party/readerwriterqueue/atomicops.h
                         DESTINATION include/atomicops.h)
 
 option(BuildTests "Build tests using the KKTest library" OFF)
+option(BuildBenchmarks "Build the benchmarks" OFF)
+
 if (BuildTests)
     enable_testing()
 
     add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
 
-    link_directories(/usr/local/lib)
-
     function (add_kktest TEST_NAME)
         add_executable(${TEST_NAME}_test ${ARGN})
+        target_link_directories(${TEST_NAME}_test PRIVATE /usr/local/lib)
         target_link_libraries(${TEST_NAME}_test kktest mcga_threading)
         add_dependencies(check ${TEST_NAME}_test)
         add_test(NAME ${TEST_NAME}
@@ -47,4 +48,13 @@ if (BuildTests)
 
     add_kktest(event_loop tests/event_loop.cpp)
     add_kktest(event_loop_thread tests/event_loop_thread.cpp)
+endif ()
+
+if (BuildBenchmarks)
+    function (add_benchmark BENCHMARK_NAME)
+        add_executable(${BENCHMARK_NAME}_benchmark ${ARGN})
+        target_link_libraries(${BENCHMARK_NAME}_benchmark mcga_threading)
+    endfunction ()
+
+    add_benchmark(event_loop_delay_error benchmarks/event_loop_delay_error.cpp)
 endif ()

@@ -195,54 +195,11 @@ TEST_CASE(EventLoop, "EventLoop") {
             actual = chrono::steady_clock::now();
         }, 3ms);
 
-        this_thread::sleep_for(5ms);
+        while (loop->size() > 0) {
+            this_thread::sleep_for(10us);
+        }
 
         expect(actual, isGreaterThanEqual(expected));
-    });
-
-    test(TestConfig("Delay error is within 1ms 99% of the time")
-         .setAttempts(1000)
-         .setRequiredPassedAttempts(990), [&] {
-        auto expected = chrono::steady_clock::now() + 10ms;
-
-        chrono::steady_clock::time_point actual;
-        loop->enqueueDelayed([&] {
-            actual = chrono::steady_clock::now();
-        }, 10ms);
-
-        this_thread::sleep_for(15ms);
-
-        expect(actual - expected, isLessThan(1ms));
-    });
-
-    test(TestConfig("Delay error is within 50us 90% of the time")
-         .setAttempts(1000)
-         .setRequiredPassedAttempts(900), [&] {
-        auto expected = chrono::steady_clock::now() + 3ms;
-
-        chrono::steady_clock::time_point actual;
-        loop->enqueueDelayed([&] {
-            actual = chrono::steady_clock::now();
-        }, 3ms);
-
-        this_thread::sleep_for(5ms);
-
-        expect(actual - expected, isLessThan(50us));
-    });
-
-    test(TestConfig("Delay error is within 20us 50% of the time")
-         .setAttempts(1000)
-         .setRequiredPassedAttempts(500), [&] {
-        auto expected = chrono::steady_clock::now() + 3ms;
-
-        chrono::steady_clock::time_point actual;
-        loop->enqueueDelayed([&] {
-            actual = chrono::steady_clock::now();
-        }, 3ms);
-
-        this_thread::sleep_for(4ms);
-
-        expect(actual - expected, isLessThan(20us));
     });
 
     multiRunTest("A delayed invocation will still execute even if immediate "
