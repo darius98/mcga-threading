@@ -15,6 +15,8 @@ class EventLoop {
  public:
     EventLoop();
 
+    ~EventLoop();
+
     std::size_t size() const;
 
     bool isRunning() const;

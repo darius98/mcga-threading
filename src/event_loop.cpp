@@ -11,6 +11,10 @@ namespace mcga::threading {
 
 EventLoop::EventLoop(): immediateQueueToken(immediateQueue) {}
 
+EventLoop::~EventLoop() {
+    delete[] immediateQueueBuffer;
+}
+
 size_t EventLoop::size() const {
     return immediateQueue.size_approx() + getDelayedQueueSize();
 }
@@ -62,9 +66,9 @@ void EventLoop::executePending() {
             auto immediateQueueSize = immediateQueue.size_approx();
             if (immediateQueueSize > 0) {
                 if (immediateQueueSize > immediateQueueBufferSize) {
+                    delete[] immediateQueueBuffer;
+                    immediateQueueBuffer = new Executable[immediateQueueSize];
                     immediateQueueBufferSize = immediateQueueSize;
-                    immediateQueueBuffer = static_cast<Executable*>(
-                        realloc(immediateQueueBuffer, immediateQueueSize));
                 }
                 auto numDequeued = immediateQueue.try_dequeue_bulk(
                         immediateQueueToken,
