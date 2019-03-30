@@ -6,6 +6,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
+option(BuildTests "Build tests using the KKTest library" OFF)
+option(BuildBenchmarks "Build the benchmarks" OFF)
+
 include(FindThreads)
 
 add_library(mcga_threading STATIC
@@ -28,9 +31,6 @@ install(FILES third_party/readerwriterqueue/readerwriterqueue.h
 install(FILES third_party/readerwriterqueue/atomicops.h
                         DESTINATION include/atomicops.h)
 
-option(BuildTests "Build tests using the KKTest library" OFF)
-option(BuildBenchmarks "Build the benchmarks" OFF)
-
 if (BuildTests)
     enable_testing()
 
@@ -39,6 +39,7 @@ if (BuildTests)
     function (add_kktest TEST_NAME)
         add_executable(${TEST_NAME}_test ${ARGN})
         target_link_directories(${TEST_NAME}_test PRIVATE /usr/local/lib)
+        target_include_directories(${TEST_NAME}_test PRIVATE /usr/local/include)
         target_link_libraries(${TEST_NAME}_test kktest mcga_threading)
         add_dependencies(check ${TEST_NAME}_test)
         add_test(NAME ${TEST_NAME}

@@ -15,7 +15,13 @@ class EventLoop {
  public:
     EventLoop();
 
-    ~EventLoop();
+    EventLoop(EventLoop&&) = delete;
+    EventLoop(const EventLoop&) = delete;
+
+    EventLoop& operator=(EventLoop&&) = delete;
+    EventLoop& operator=(const EventLoop&) = delete;
+
+    ~EventLoop() = default;
 
     std::size_t size() const;
 
@@ -74,8 +80,8 @@ class EventLoop {
 
     moodycamel::ConcurrentQueue<Executable> immediateQueue;
     moodycamel::ConsumerToken immediateQueueToken;
-    Executable* immediateQueueBuffer = new Executable[10];
-    std::size_t immediateQueueBufferSize = 10;
+    std::vector<Executable> immediateQueueBuffer;
+    std::atomic_size_t numImmediateDequeued = 0;
 
     mutable std::mutex delayedQueueLock;
     std::priority_queue<DelayedInvocationPtr,
@@ -84,4 +90,4 @@ class EventLoop {
 
 };
 
-}
+}  // namespace mcga::threading

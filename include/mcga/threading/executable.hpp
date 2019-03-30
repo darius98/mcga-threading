@@ -4,6 +4,6 @@
 
 namespace mcga::threading {
 
-typedef std::function<void()> Executable;
+using Executable = std::function<void()>;
 
-}
+} // namespace mcga::threading

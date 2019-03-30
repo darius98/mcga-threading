@@ -1,3 +1,5 @@
+#pragma ide diagnostic ignored "readability-magic-numbers"
+
 #include <random>
 #include <set>
 
@@ -6,15 +8,27 @@
 
 #include "mcga/threading/event_loop_thread.hpp"
 
-using namespace kktest;
-using namespace kktest::matchers;
-using namespace mcga::threading;
-using namespace std;
+using kktest::setUp;
+using kktest::tearDown;
+using kktest::test;
+using kktest::matchers::hasSize;
+using kktest::matchers::isZero;
+using kktest::matchers::isEqualTo;
+using kktest::matchers::isNotEqualTo;
+using kktest::matchers::expect;
+using mcga::threading::EventLoopThread;
+using std::chrono::nanoseconds;
+using std::hash;
+using std::set;
+using std::thread;
+using std::vector;
+using std::literals::chrono_literals::operator""ms;
+namespace this_thread = std::this_thread;
 
 bool randomBool() {
-    static random_device rd;
-    static mt19937 generator(rd());
-    static uniform_int_distribution<> distribution(0, 1);
+    static std::random_device rd;
+    static std::mt19937 generator(rd());
+    static std::uniform_int_distribution<> distribution(0, 1);
     return distribution(generator) == 1;
 }
 
@@ -34,7 +48,7 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
         int x = 0;
         loop->enqueue([&] { x = 1; });
 
-        this_thread::sleep_for(10ms);
+        this_thread::sleep_for(1ms);
 
         expect(x, isZero);
     });
@@ -53,8 +67,7 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
         expect(x, isEqualTo(numTasks));
     });
 
-    multiRunTest("Multiple concurrent starts and stops do not break the "
-                 "EventLoopThread", 1000, [&] {
+    test("Concurrent starts and stops do not break the EventLoopThread", [&] {
         constexpr int numWorkers = 10;
         constexpr int numOps = 500;
 
@@ -92,11 +105,11 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
 
         for (int i = 0; i < numTasks; ++ i) {
             loop->enqueue(task);
-            loop->enqueueDelayed(task, chrono::nanoseconds(numTasks - i));
+            loop->enqueueDelayed(task, nanoseconds(numTasks - i));
         }
 
         while (loop->size() > 0) {
-            this_thread::sleep_for(50ns);
+            this_thread::sleep_for(1ms);
         }
 
         expect(numTasksExecuted, isEqualTo(2 * numTasks));

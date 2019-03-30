@@ -60,4 +60,4 @@ void EventLoopThread::enqueue(Executable&& func) {
     loop.enqueue(move(func));
 }
 
-}
+}  // namespace mcga::threading

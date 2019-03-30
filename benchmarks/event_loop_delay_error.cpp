@@ -31,7 +31,7 @@ class DurationTracker {
     }
 
     nanoseconds percent(double p) const {
-        size_t index = p * 0.01 * samples.size();
+        auto index = static_cast<size_t>(p * 0.01 * samples.size());
         if (index >= samples.size() - 1) {
             return max();
         }
@@ -40,25 +40,21 @@ class DurationTracker {
         }
         return samples[index + 1];
     }
-
-    size_t numNegatives() const {
-        return count_if(samples.begin(), samples.end(), [](auto sample) { return sample < 0ns; });
-    }
 };
 
 class Stopwatch {
  public:
-    Stopwatch(): startTime(system_clock::now()) {}
+    Stopwatch(): startTime(steady_clock::now()) {}
 
     nanoseconds get() const {
-        return duration_cast<nanoseconds>(system_clock::now() - startTime);
+        return duration_cast<nanoseconds>(steady_clock::now() - startTime);
     }
 
-    void track(DurationTracker& tracker, nanoseconds expected) const {
-        tracker.addSample(get() - expected);
+    void track(DurationTracker* tracker, nanoseconds expected) const {
+        tracker->addSample(get() - expected);
     }
  private:
-    system_clock::time_point startTime;
+    steady_clock::time_point startTime;
 };
 
 ostream& operator<<(ostream& os, const chrono::nanoseconds& ns) {
@@ -89,7 +85,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < numSamples; ++ i) {
         Stopwatch watch;
         loop.enqueueDelayed([&tracker, watch]() {
-            watch.track(tracker, 3ms);
+            watch.track(&tracker, 3ms);
         }, 3ms);
         while (loop.size() > 0) {
             this_thread::sleep_for(100us);
@@ -101,10 +97,11 @@ int main(int argc, char** argv) {
     tracker.organize();
 
     cout << "Number of samples: " << numSamples << "\n";
-    cout << "Minimum error: " << tracker.min() << ", Maximum error: " << tracker.max() << "\n\n";
-    cout << "50\%: " << tracker.percent(50) << "\n";
-    cout << "75\%: " << tracker.percent(75) << "\n";
-    cout << "90\%: " << tracker.percent(90) << "\n";
-    cout << "99\%: " << tracker.percent(99) << "\n";
+    cout << "Minimum error: " << tracker.min() << ", "
+         << "Maximum error: " << tracker.max() << "\n\n";
+    cout << "50%: " << tracker.percent(50) << "\n";
+    cout << "75%: " << tracker.percent(75) << "\n";
+    cout << "90%: " << tracker.percent(90) << "\n";
+    cout << "99%: " << tracker.percent(99) << "\n";
     return 0;
 }

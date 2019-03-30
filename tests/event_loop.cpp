@@ -1,3 +1,5 @@
+#pragma ide diagnostic ignored "readability-magic-numbers"
+
 #include <random>
 #include <thread>
 #include <vector>
@@ -7,29 +9,49 @@
 
 #include "mcga/threading/event_loop.hpp"
 
-using namespace kktest;
-using namespace kktest::matchers;
-using namespace mcga::threading;
-using namespace std;
+using kktest::setUp;
+using kktest::tearDown;
+using kktest::test;
+using kktest::TestConfig;
+using kktest::expect;
+using kktest::matchers::expect;
+using kktest::matchers::isEqualTo;
+using kktest::matchers::isGreaterThanEqual;
+using kktest::matchers::isZero;
+using mcga::threading::DelayedInvocationPtr;
+using mcga::threading::EventLoop;
+using mcga::threading::Executable;
+using std::atomic_bool;
+using std::chrono::microseconds;
+using std::chrono::milliseconds;
+using std::chrono::nanoseconds;
+using std::chrono::steady_clock;
+using std::literals::chrono_literals::operator""ms;
+using std::literals::chrono_literals::operator""ns;
+using std::literals::chrono_literals::operator""us;
+using std::ostream;
+using std::thread;
+using std::vector;
+namespace this_thread = std::this_thread;
 
-chrono::milliseconds randomDelay() {
-    static random_device rd;
-    static mt19937 generator(rd());
-    static uniform_int_distribution<> distribution(1, 10);
-    return chrono::milliseconds(distribution(generator));
+milliseconds randomDelay() {
+    static std::random_device rd;
+    static std::mt19937 generator(rd());
+    static std::uniform_int_distribution<> distribution(1, 10);
+    return milliseconds(distribution(generator));
 }
 
-ostream& operator<<(ostream& os, const chrono::milliseconds& ms) {
+ostream& operator<<(ostream& os, const milliseconds& ms) {
     os << ms.count() << "ms";
     return os;
 }
 
-ostream& operator<<(ostream& os, const chrono::microseconds& us) {
+ostream& operator<<(ostream& os, const microseconds& us) {
     os << us.count() << "us";
     return os;
 }
 
-ostream& operator<<(ostream& os, const chrono::nanoseconds& ns) {
+ostream& operator<<(ostream& os, const nanoseconds& ns) {
     os << ns.count() << "ns";
     return os;
 }
@@ -40,6 +62,8 @@ TEST_CASE(EventLoop, "EventLoop") {
 
     setUp([&] {
         loop = new EventLoop();
+        expect(!loop->isRunning(), "Loop is running right after instantiation");
+
         atomic_bool started;
         eventLoopThread = new thread([&] {
             started = true;
@@ -51,6 +75,7 @@ TEST_CASE(EventLoop, "EventLoop") {
         // This sleep is to make sure the event loop thread's start() call is
         // executed before the testing thread's stop() call.
         this_thread::sleep_for(1ms);
+        expect(loop->isRunning(), "Loop is not running");
     });
 
     tearDown([&] {
@@ -99,30 +124,6 @@ TEST_CASE(EventLoop, "EventLoop") {
         expect(x, isEqualTo(4));
         this_thread::sleep_for(105ms);
         expect(x, isEqualTo(5));
-    });
-
-    multiRunTest("Enqueueing executables from different threads", 1000, [&] {
-        int x = 0;
-
-        constexpr int numWorkers = 30;
-        constexpr int numJobsPerWorker = 500;
-
-        vector<thread*> workers(numWorkers, nullptr);
-        for (int i = 0; i < numWorkers; ++ i) {
-            workers[i] = new thread([&] {
-                for (int j = 0; j < numJobsPerWorker; ++ j) {
-                    loop->enqueueDelayed([&] { x += 1; }, randomDelay());
-                }
-            });
-        }
-        for (int i = 0; i < numWorkers; ++ i) {
-            workers[i]->join();
-            delete workers[i];
-        }
-        while (loop->size() > 0) {
-            this_thread::sleep_for(1ms);
-        }
-        expect(x, isEqualTo(numWorkers * numJobsPerWorker));
     });
 
     test("Delayed executions are executed at the given time", [&] {
@@ -186,31 +187,15 @@ TEST_CASE(EventLoop, "EventLoop") {
         expect(x, isEqualTo(1));
     });
 
-    multiRunTest("A delayed invocation is never executed before "
-                 "a period at least equal to its delay has passed", 1000, [&] {
-        auto expected = chrono::steady_clock::now() + 3ms;
-
-        chrono::steady_clock::time_point actual;
-        loop->enqueueDelayed([&] {
-            actual = chrono::steady_clock::now();
-        }, 3ms);
-
-        while (loop->size() > 0) {
-            this_thread::sleep_for(10us);
-        }
-
-        expect(actual, isGreaterThanEqual(expected));
-    });
-
-    multiRunTest("A delayed invocation will still execute even if immediate "
-                 "invocations keep getting added to the queue", 1000, [&] {
+    test("A delayed invocation will still execute even if immediate "
+         "invocations keep getting added to the queue", [&] {
         int x = 0;
         int y = 0;
 
-        auto limit = chrono::steady_clock::now() + 7ms;
+        auto limit = steady_clock::now() + 7ms;
         Executable func = [&x, &loop, &func, limit] {
             x += 1;
-            if (chrono::steady_clock::now() <= limit) {
+            if (steady_clock::now() <= limit) {
                 loop->enqueue(func);
             }
         };
@@ -224,5 +209,50 @@ TEST_CASE(EventLoop, "EventLoop") {
         }
 
         expect(y, isEqualTo(1));
+    });
+
+    test(TestConfig("Enqueueing executables from different threads")
+         .setTimeTicksLimit(10), [&] {
+        constexpr int numWorkers = 30;
+        constexpr int numJobsPerWorker = 50000;
+
+        int x = 0;
+
+        vector<thread*> workers(numWorkers, nullptr);
+        for (int i = 0; i < numWorkers; ++ i) {
+            workers[i] = new thread([&] {
+                for (int j = 0; j < numJobsPerWorker; ++ j) {
+                    loop->enqueueDelayed([&] { x += 1; }, randomDelay());
+                }
+            });
+        }
+        for (int i = 0; i < numWorkers; ++ i) {
+            workers[i]->join();
+            delete workers[i];
+        }
+        while (loop->size() > 0) {
+            this_thread::sleep_for(1ms);
+        }
+        expect(x, isEqualTo(numWorkers * numJobsPerWorker));
+    });
+
+    test(TestConfig("A delayed invocation is never executed before "
+                    "a period at least equal to its delay has passed")
+         .setTimeTicksLimit(10), [&] {
+        constexpr int numSamples = 1000;
+        for (int i = 0; i < numSamples; ++ i) {
+            nanoseconds expected = 3ms;
+            auto startTime = steady_clock::now();
+            nanoseconds actual;
+            loop->enqueueDelayed([startTime, &actual] {
+                actual = steady_clock::now() - startTime;
+            }, 3ms);
+
+            while (loop->size() > 0) {
+                this_thread::sleep_for(4us);
+            }
+
+            expect(actual, isGreaterThanEqual(expected));
+        }
     });
 }

@@ -1,0 +1,5 @@
+Checks: '*,
+         -fuchsia-*,
+         -cert-err58-cpp,
+         -cppcoreguidelines-owning-memory,
+         -cppcoreguidelines-avoid-magic-numbers'

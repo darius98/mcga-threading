@@ -52,4 +52,4 @@ void DelayedInvocation::setTimePoint() {
     timePoint = Clock::now() + duration_cast<Clock::duration>(delay);
 }
 
-}
+}  // namespace mcga::threading

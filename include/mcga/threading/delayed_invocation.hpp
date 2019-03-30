@@ -10,9 +10,9 @@ namespace mcga::threading {
 
 class DelayedInvocation {
  public:
-    typedef std::chrono::steady_clock Clock;
-    typedef std::chrono::nanoseconds Delay;
-    typedef std::shared_ptr<DelayedInvocation> DelayedInvocationPtr;
+    using Clock = std::chrono::steady_clock;
+    using Delay = std::chrono::nanoseconds;
+    using DelayedInvocationPtr = std::shared_ptr<DelayedInvocation>;
 
     bool isCancelled() const;
 
@@ -48,6 +48,6 @@ class DelayedInvocation {
  friend class EventLoop;
  friend class MakeSharedEnabler;
 };
-typedef DelayedInvocation::DelayedInvocationPtr DelayedInvocationPtr;
+using DelayedInvocationPtr = DelayedInvocation::DelayedInvocationPtr;
 
-}
+}  // namespace mcga::threading

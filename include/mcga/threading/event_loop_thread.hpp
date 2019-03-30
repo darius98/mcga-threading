@@ -11,6 +11,12 @@ class EventLoopThread {
  public:
     EventLoopThread() = default;
 
+    EventLoopThread(EventLoopThread&&) = delete;
+    EventLoopThread(const EventLoopThread&) = delete;
+
+    EventLoopThread& operator=(EventLoopThread&&) = delete;
+    EventLoopThread& operator=(const EventLoopThread&) = delete;
+
     ~EventLoopThread();
 
     std::size_t size() const;
@@ -57,4 +63,4 @@ class EventLoopThread {
     std::thread loopThread;
 };
 
-}
+}  // namespace mcga::threading

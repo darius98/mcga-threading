@@ -4,19 +4,16 @@ using std::lock_guard;
 using std::move;
 using std::size_t;
 using std::this_thread::sleep_for;
-using std::vector;
 using namespace std::literals::chrono_literals;
 
 namespace mcga::threading {
 
 EventLoop::EventLoop(): immediateQueueToken(immediateQueue) {}
 
-EventLoop::~EventLoop() {
-    delete[] immediateQueueBuffer;
-}
-
 size_t EventLoop::size() const {
-    return immediateQueue.size_approx() + getDelayedQueueSize();
+    return immediateQueue.size_approx()
+           + getDelayedQueueSize()
+           + numImmediateDequeued;
 }
 
 bool EventLoop::isRunning() const {
@@ -65,17 +62,17 @@ void EventLoop::executePending() {
         } else {
             auto immediateQueueSize = immediateQueue.size_approx();
             if (immediateQueueSize > 0) {
-                if (immediateQueueSize > immediateQueueBufferSize) {
-                    delete[] immediateQueueBuffer;
-                    immediateQueueBuffer = new Executable[immediateQueueSize];
-                    immediateQueueBufferSize = immediateQueueSize;
+                if (immediateQueueSize > immediateQueueBuffer.size()) {
+                    immediateQueueBuffer.resize(immediateQueueSize);
                 }
-                auto numDequeued = immediateQueue.try_dequeue_bulk(
+                numImmediateDequeued = immediateQueue.try_dequeue_bulk(
                         immediateQueueToken,
-                        immediateQueueBuffer,
-                        immediateQueueBufferSize);
+                        immediateQueueBuffer.begin(),
+                        immediateQueueBuffer.size());
+                size_t numDequeued = numImmediateDequeued;
                 for (size_t i = 0; i < numDequeued; ++ i) {
                     immediateQueueBuffer[i]();
+                    numImmediateDequeued--;
                 }
                 executed = numDequeued > 0;
             }
@@ -101,4 +98,4 @@ DelayedInvocationPtr EventLoop::popDelayedQueue() {
     return top;
 }
 
-}
+}  // namespace mcga::threading
