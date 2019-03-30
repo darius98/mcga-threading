@@ -15,26 +15,26 @@ bool DelayedInvocation::cancel() {
 }
 
 bool DelayedInvocation::isInterval() const {
-    return interval;
+    return isRepeated;
 }
 
 class MakeSharedEnabler: public DelayedInvocation {
  public:
-    MakeSharedEnabler(Executable executable, Delay _delay, bool _interval)
-            : DelayedInvocation(move(executable), _delay, _interval) {}
+    MakeSharedEnabler(Executable executable, Delay delay, bool isRepeated)
+            : DelayedInvocation(move(executable), delay, isRepeated) {}
 };
 
-DelayedInvocationPtr DelayedInvocation::Delayed(Executable func, Delay delay) {
+DelayedInvocationPtr DelayedInvocation::delayed(Executable func, Delay delay) {
     return make_shared<MakeSharedEnabler>(move(func), delay, false);
 }
 
-DelayedInvocationPtr DelayedInvocation::Interval(Executable func, Delay delay) {
+DelayedInvocationPtr DelayedInvocation::interval(Executable func, Delay delay) {
     return make_shared<MakeSharedEnabler>(move(func), delay, true);
 }
 
 DelayedInvocation::DelayedInvocation(
-        Executable executable, Delay _delay, bool _interval)
-        : executable(move(executable)), delay(_delay), interval(_interval) {
+        Executable executable, Delay delay, bool isRepeated)
+        : executable(move(executable)), delay(delay), isRepeated(isRepeated) {
     setTimePoint();
 }
 

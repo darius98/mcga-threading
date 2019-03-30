@@ -28,10 +28,10 @@ class DelayedInvocation {
         }
     };
 
-    static DelayedInvocationPtr Delayed(Executable executable, Delay delay);
-    static DelayedInvocationPtr Interval(Executable executable, Delay delay);
+    static DelayedInvocationPtr delayed(Executable executable, Delay delay);
+    static DelayedInvocationPtr interval(Executable executable, Delay delay);
 
-    DelayedInvocation(Executable executable, Delay _delay, bool _interval);
+    DelayedInvocation(Executable executable, Delay delay, bool isRepeated);
 
     bool shouldExecute() const;
 
@@ -42,7 +42,7 @@ class DelayedInvocation {
     Executable executable;
     Delay delay;
     Clock::time_point timePoint;
-    bool interval;
+    bool isRepeated;
     std::atomic_bool cancelled = false;
 
  friend class EventLoop;

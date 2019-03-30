@@ -36,7 +36,7 @@ class EventLoop {
     DelayedInvocationPtr enqueueDelayed(
             const Executable& func,
             const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return enqueue(DelayedInvocation::Delayed(
+        return enqueue(DelayedInvocation::delayed(
                 func,
                 std::chrono::duration_cast<DelayedInvocation::Delay>(delay)));
     }
@@ -45,7 +45,7 @@ class EventLoop {
     DelayedInvocationPtr enqueueDelayed(
             Executable&& func,
             const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return enqueue(DelayedInvocation::Delayed(
+        return enqueue(DelayedInvocation::delayed(
                 std::move(func),
                 std::chrono::duration_cast<DelayedInvocation::Delay>(delay)));
     }
@@ -54,7 +54,7 @@ class EventLoop {
     DelayedInvocationPtr enqueueInterval(
             const Executable& func,
             const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return enqueue(DelayedInvocation::Interval(
+        return enqueue(DelayedInvocation::interval(
                 func,
                 std::chrono::duration_cast<DelayedInvocation::Delay>(delay)));
     }
@@ -63,7 +63,7 @@ class EventLoop {
     DelayedInvocationPtr enqueueInterval(
             Executable&& func,
             const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return enqueue(DelayedInvocation::Interval(
+        return enqueue(DelayedInvocation::interval(
                 std::move(func),
                 std::chrono::duration_cast<DelayedInvocation::Delay>(delay)));
     }
