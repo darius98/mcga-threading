@@ -1,4 +1,4 @@
-#include "mcga/threading/delayed_invocation.hpp"
+#include "mcga/threading/internal/delayed_invocation.hpp"
 
 using std::make_shared;
 using std::move;

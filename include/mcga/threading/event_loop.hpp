@@ -6,22 +6,18 @@
 
 #include <concurrentqueue.h>
 
-#include "delayed_invocation.hpp"
-#include "executable.hpp"
+#include "internal/delayed_invocation.hpp"
+#include "internal/executable.hpp"
+#include "internal/disallow_copy_and_move.hpp"
 
 namespace mcga::threading {
 
 class EventLoop {
  public:
     EventLoop();
-
-    EventLoop(EventLoop&&) = delete;
-    EventLoop(const EventLoop&) = delete;
-
-    EventLoop& operator=(EventLoop&&) = delete;
-    EventLoop& operator=(const EventLoop&) = delete;
-
     ~EventLoop() = default;
+
+    DISALLOW_COPY_AND_MOVE(EventLoop);
 
     std::size_t size() const;
 

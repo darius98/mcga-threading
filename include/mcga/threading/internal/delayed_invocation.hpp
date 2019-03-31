@@ -4,7 +4,7 @@
 #include <chrono>
 #include <memory>
 
-#include "executable.hpp"
+#include "mcga/threading/internal/executable.hpp"
 
 namespace mcga::threading {
 
