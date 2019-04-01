@@ -48,7 +48,7 @@ if (BuildTests)
     endfunction ()
 
     add_kktest(event_loop tests/event_loop.cpp)
-    add_kktest(event_loop_thread tests/event_loop_thread.cpp)
+    add_kktest(thread_wrapper tests/thread_wrapper.cpp)
 endif ()
 
 if (BuildBenchmarks)

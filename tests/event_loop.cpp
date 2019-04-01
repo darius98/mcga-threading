@@ -1,37 +1,37 @@
 #pragma ide diagnostic ignored "readability-magic-numbers"
 
 #include <random>
-#include <thread>
-#include <vector>
+#include <set>
 
 #include <kktest.hpp>
 #include <kktest_ext/matchers.hpp>
 
-#include "mcga/threading/event_loop.hpp"
+#include "mcga/threading/event_loop_thread.hpp"
 
 using kktest::setUp;
 using kktest::tearDown;
 using kktest::test;
 using kktest::TestConfig;
-using kktest::expect;
-using kktest::matchers::expect;
-using kktest::matchers::isEqualTo;
-using kktest::matchers::isGreaterThanEqual;
+using kktest::matchers::hasSize;
 using kktest::matchers::isZero;
-using mcga::threading::DelayedInvocationPtr;
-using mcga::threading::EventLoop;
+using kktest::matchers::isEqualTo;
+using kktest::matchers::isNotEqualTo;
+using kktest::matchers::isGreaterThanEqual;
+using kktest::matchers::expect;
 using mcga::threading::Executable;
-using std::atomic_bool;
+using mcga::threading::EventLoopThread;
+using mcga::threading::DelayedInvocationPtr;
 using std::chrono::microseconds;
 using std::chrono::milliseconds;
 using std::chrono::nanoseconds;
 using std::chrono::steady_clock;
-using std::operator""ms;
-using std::operator""ns;
-using std::operator""us;
+using std::hash;
 using std::ostream;
+using std::set;
 using std::thread;
 using std::vector;
+using std::operator""ms;
+using std::operator""us;
 namespace this_thread = std::this_thread;
 
 milliseconds randomDelay() {
@@ -57,36 +57,49 @@ ostream& operator<<(ostream& os, const nanoseconds& ns) {
 }
 
 TEST_CASE(EventLoop, "EventLoop") {
-    thread* eventLoopThread = nullptr;
-    EventLoop* loop = nullptr;
+    EventLoopThread* loop = nullptr;
 
     setUp([&] {
-        loop = new EventLoop();
-        expect(!loop->isRunning(), "Loop is running right after instantiation");
-
-        atomic_bool started;
-        eventLoopThread = new thread([&] {
-            started = true;
-            loop->start();
-        });
-        while (!started) {
-            this_thread::sleep_for(1ns);
-        }
-        // This sleep is to make sure the event loop thread's start() call is
-        // executed before the testing thread's stop() call.
-        this_thread::sleep_for(1ms);
-        expect(loop->isRunning(), "Loop is not running");
+        loop = new EventLoopThread();
+        loop->start();
     });
 
     tearDown([&] {
         loop->stop();
-        eventLoopThread->join();
-        delete eventLoopThread;
         delete loop;
+        loop = nullptr;
+    });
+
+    test("All tasks enqueued in an EventLoopThread are executed on the "
+         "same thread, different from the main thread", [&] {
+        constexpr int numTasks = 10000;
+
+        set<size_t> threadIds;
+        int numTasksExecuted = 0;
+
+        auto task = [&] {
+            numTasksExecuted += 1;
+            threadIds.insert(hash<thread::id>()(this_thread::get_id()));
+        };
+
+        for (int i = 0; i < numTasks; ++ i) {
+            loop->enqueue(task);
+            loop->enqueueDelayed(task, nanoseconds(numTasks - i));
+        }
+
+        while (loop->size() > 0) {
+            this_thread::sleep_for(1ms);
+        }
+
+        expect(numTasksExecuted, isEqualTo(2 * numTasks));
+        expect(threadIds, hasSize(1));
+        expect(*threadIds.begin(),
+               isNotEqualTo(hash<thread::id>()(this_thread::get_id())));
     });
 
     test("Starting and stopping loop works", [&] {
-        // This is done in set-up, tear-down. The only condition is time-out.
+        // This is done in set-up, tear-down.
+        // The only condition is time-out.
     });
 
     test("size() is zero initially", [&] {
