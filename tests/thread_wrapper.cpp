@@ -22,24 +22,17 @@ using std::thread;
 using std::vector;
 
 struct BasicWorker {
-    atomic_bool running = false;
     volatile int numSpins = 0;
 
     size_t size() const {
         return 0;
     }
 
-    void start() {
-        if (!running.exchange(true)) {
-            while (running) {
-                numSpins += 1;
-                std::this_thread::sleep_for(20ns);
-            }
+    void start(volatile atomic_bool* running) {
+        while (running->load()) {
+            numSpins += 1;
+            std::this_thread::sleep_for(20ns);
         }
-    }
-
-    void stop() {
-        running = false;
     }
 };
 
@@ -61,11 +54,11 @@ TEST_CASE(ThreadWrapper, "ThreadWrapper") {
         delete loop;
     });
 
-    multiRunTest(TestConfig("Concurrent starts and stops do not break the "
-                            "ThreadWrapper")
-                 .setTimeTicksLimit(10), 10, [&] {
-        constexpr int numWorkers = 50;
-        constexpr int numOps = 1000;
+    multiRunTest("Concurrent starts and stops do not break the ThreadWrapper",
+                 10,
+                 [&] {
+        constexpr int numWorkers = 100;
+        constexpr int numOps = 10000;
 
         auto loop = new ThreadWrapper<BasicWorker>();
 

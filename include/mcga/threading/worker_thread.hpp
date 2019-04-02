@@ -11,7 +11,7 @@
 namespace mcga::threading {
 
 class Worker {
- public:
+ private:
     using Executable = std::function<void()>;
 
     Worker();
@@ -21,22 +21,20 @@ class Worker {
 
     size_t sizeApprox() const;
 
-    bool isRunning() const;
-    void start();
-    void stop();
+    void start(volatile std::atomic_bool* running);
 
     void enqueue(const Executable& job);
     void enqueue(Executable&& job);
 
- private:
     void run();
-
-    std::atomic_bool running = false;
 
     moodycamel::ConcurrentQueue<Executable> queue;
     moodycamel::ConsumerToken queueConsumerToken;
     std::vector<Executable> queueBuffer;
     std::atomic_size_t numBuffered = 0;
+
+friend class internal::ThreadWrapper<Worker>;
+friend class WorkerThread;
 };
 
 class WorkerThread : public internal::ThreadWrapper<Worker> {

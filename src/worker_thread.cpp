@@ -2,31 +2,22 @@
 
 #include "mcga/threading/internal/loop_tick_duration.hpp"
 
+using std::atomic_bool;
 using std::move;
 
 namespace mcga::threading {
 
 Worker::Worker(): queueConsumerToken(queue) {}
 
-bool Worker::isRunning() const {
-    return running;
-}
-
 size_t Worker::sizeApprox() const {
     return queue.size_approx() + numBuffered;
 }
 
-void Worker::start() {
-    if (!running.exchange(true)) {
-        while (running.load()) {
-            run();
-            std::this_thread::sleep_for(internal::loopTickDuration);
-        }
+void Worker::start(volatile atomic_bool* running) {
+    while (running->load()) {
+        run();
+        std::this_thread::sleep_for(internal::loopTickDuration);
     }
-}
-
-void Worker::stop() {
-    running.store(false);
 }
 
 void Worker::enqueue(const Executable& job) {

@@ -2,6 +2,7 @@
 
 #include "mcga/threading/internal/loop_tick_duration.hpp"
 
+using std::atomic_bool;
 using std::lock_guard;
 using std::move;
 using std::size_t;
@@ -17,20 +18,11 @@ size_t EventLoop::sizeApprox() const {
            + numImmediateDequeued;
 }
 
-bool EventLoop::isRunning() const {
-    return running;
-}
-
-void EventLoop::start() {
-    running = true;
-    while (running) {
+void EventLoop::start(volatile atomic_bool* running) {
+    while (running->load()) {
         executePending();
         sleep_for(internal::loopTickDuration);
     }
-}
-
-void EventLoop::stop() {
-    running = false;
 }
 
 void EventLoop::enqueue(const Executable& func) {
@@ -39,6 +31,30 @@ void EventLoop::enqueue(const Executable& func) {
 
 void EventLoop::enqueue(Executable&& func) {
     immediateQueue.enqueue(move(func));
+}
+
+DelayedInvocationPtr EventLoop::enqueueDelayed(
+        const Executable& func,
+        const DelayedInvocation::Delay& delay) {
+    return enqueue(DelayedInvocation::delayed(func, delay));
+}
+
+DelayedInvocationPtr EventLoop::enqueueDelayed(
+        Executable&& func,
+        const DelayedInvocation::Delay& delay) {
+    return enqueue(DelayedInvocation::delayed(move(func), delay));
+}
+
+DelayedInvocationPtr EventLoop::enqueueInterval(
+        const Executable& func,
+        const DelayedInvocation::Delay& delay) {
+    return enqueue(DelayedInvocation::interval(func, delay));
+}
+
+DelayedInvocationPtr EventLoop::enqueueInterval(
+        Executable&& func,
+        const DelayedInvocation::Delay& delay) {
+    return enqueue(DelayedInvocation::interval(move(func), delay));
 }
 
 DelayedInvocationPtr EventLoop::enqueue(DelayedInvocationPtr invocation) {

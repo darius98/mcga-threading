@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mutex>
+#include <atomic>
 #include <thread>
 
 #include "disallow_copy_and_move.hpp"
@@ -15,6 +15,8 @@ class ThreadWrapper {
     DISALLOW_COPY_AND_MOVE(ThreadWrapper);
 
     ~ThreadWrapper() {
+        // If some other thread is STILL calling start/stop while the current
+        // thread is destroying the object, then it's undefined behaviour.
         stop();
     }
 
@@ -23,44 +25,54 @@ class ThreadWrapper {
     }
 
     bool isRunning() const {
-        std::lock_guard guard(startStopMutex);
-        return isStarted;
+        return started;
     }
 
     void start() {
-        std::lock_guard guard(startStopMutex);
-        if (isStarted) {
+        if (isInStartOrStop.test_and_set()) {
+            // Ensure that only one thread's call to start()/stop() actually
+            // does anything. This flag is cleared at the end of the method.
             return;
         }
-        try {
-            workerThread = std::thread([this]() {
-                isStarted = true;
-                worker.start();
-            });
-        } catch(const std::system_error& err) {
-            guard.~lock_guard();
-            throw err;
+        if (!started) {
+            try {
+                workerThread = std::thread([this]() {
+                    started.store(true);
+                    worker.start(&started);
+                });
+            } catch(const std::system_error& err) {
+                isInStartOrStop.clear();
+                throw err;
+            }
+            while (!started) {
+                std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+            }
         }
-        while (!isStarted) {
-            std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-        }
+        isInStartOrStop.clear();
     }
 
     void stop() {
-        std::lock_guard guard(startStopMutex);
-        if (!isStarted) {
+        if (isInStartOrStop.test_and_set()) {
+            // Ensure that only one thread's call to start()/stop() actually
+            // does anything. This flag is cleared at the end of the method.
             return;
         }
-        worker.stop();
-        workerThread.join();
-        isStarted = false;
+        started.store(false);
+        if (workerThread.joinable()) {
+            // Since no other thread can enter start() or stop() while we are
+            // here, nothing can happen that turns joinable() into
+            // not-joinable() at this point (between the check and the join()).
+            workerThread.join();
+        }
+        isInStartOrStop.clear();
     }
 
  protected:
     W worker;
+
  private:
-    mutable std::mutex startStopMutex;
-    std::atomic_bool isStarted = false;
+    std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
+    std::atomic_bool started = false;
     std::thread workerThread;
 };
 

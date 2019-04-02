@@ -38,7 +38,7 @@ TEST_CASE(Worker, "Worker") {
         constexpr int numWorkers = 100;
         constexpr int numJobsPerWorker = 100000;
 
-        int x = 0; // note: Not atomic by design of the test.
+        int x = 0; // note: Not atomic by design.
 
         vector<thread*> workers(numWorkers, nullptr);
         for (int i = 0; i < numWorkers; ++ i) {

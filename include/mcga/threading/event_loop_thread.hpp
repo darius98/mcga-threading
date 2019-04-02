@@ -12,7 +12,7 @@
 namespace mcga::threading {
 
 class EventLoop {
- public:
+ private:
     using Executable = DelayedInvocation::Executable;
 
     EventLoop();
@@ -22,58 +22,27 @@ class EventLoop {
 
     std::size_t sizeApprox() const;
 
-    bool isRunning() const;
-    void start();
-    void stop();
+    void start(volatile std::atomic_bool* running);
 
     void enqueue(const Executable& func);
     void enqueue(Executable&& func);
 
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueDelayed(
-            const Executable& func,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return enqueue(DelayedInvocation::delayed(
-                func,
-                std::chrono::duration_cast<DelayedInvocation::Delay>(delay)));
-    }
+    DelayedInvocationPtr enqueueDelayed(const Executable& func,
+                                        const DelayedInvocation::Delay& delay);
+    DelayedInvocationPtr enqueueDelayed(Executable&& func,
+                                        const DelayedInvocation::Delay& delay);
 
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueDelayed(
-            Executable&& func,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return enqueue(DelayedInvocation::delayed(
-                std::move(func),
-                std::chrono::duration_cast<DelayedInvocation::Delay>(delay)));
-    }
+    DelayedInvocationPtr enqueueInterval(const Executable& func,
+                                         const DelayedInvocation::Delay& delay);
+    DelayedInvocationPtr enqueueInterval(Executable&& func,
+                                         const DelayedInvocation::Delay& delay);
 
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueInterval(
-            const Executable& func,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return enqueue(DelayedInvocation::interval(
-                func,
-                std::chrono::duration_cast<DelayedInvocation::Delay>(delay)));
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueInterval(
-            Executable&& func,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return enqueue(DelayedInvocation::interval(
-                std::move(func),
-                std::chrono::duration_cast<DelayedInvocation::Delay>(delay)));
-    }
-
- private:
     DelayedInvocationPtr enqueue(DelayedInvocationPtr invocation);
 
     void executePending();
 
     std::size_t getDelayedQueueSize() const;
     DelayedInvocationPtr popDelayedQueue();
-
-    std::atomic_bool running = false;
 
     moodycamel::ConcurrentQueue<Executable> immediateQueue;
     moodycamel::ConsumerToken immediateQueueToken;
@@ -85,6 +54,8 @@ class EventLoop {
                         std::vector<DelayedInvocationPtr>,
                         DelayedInvocation::Compare> delayedQueue;
 
+friend class internal::ThreadWrapper<EventLoop>;
+friend class EventLoopThread;
 };
 
 class EventLoopThread: public internal::ThreadWrapper<EventLoop> {
