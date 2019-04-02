@@ -18,7 +18,6 @@ using kktest::matchers::isEqualTo;
 using kktest::matchers::isNotEqualTo;
 using kktest::matchers::isGreaterThanEqual;
 using kktest::matchers::expect;
-using mcga::threading::Executable;
 using mcga::threading::EventLoopThread;
 using mcga::threading::DelayedInvocationPtr;
 using std::chrono::microseconds;
@@ -87,9 +86,10 @@ TEST_CASE(EventLoop, "EventLoop") {
             loop->enqueueDelayed(task, nanoseconds(numTasks - i));
         }
 
-        while (loop->size() > 0) {
+        while (loop->sizeApprox() > 0) {
             this_thread::sleep_for(1ms);
         }
+        this_thread::sleep_for(10ms);
 
         expect(numTasksExecuted, isEqualTo(2 * numTasks));
         expect(threadIds, hasSize(1));
@@ -97,30 +97,23 @@ TEST_CASE(EventLoop, "EventLoop") {
                isNotEqualTo(hash<thread::id>()(this_thread::get_id())));
     });
 
-    test("Starting and stopping loop works", [&] {
-        // This is done in set-up, tear-down.
-        // The only condition is time-out.
-    });
-
-    test("size() is zero initially", [&] {
-        expect(loop->size(), isZero);
-    });
-
     test("Enqueueing an executable executes it", [&] {
         int x = 0;
         loop->enqueue([&]{ x += 1; });
-        while (loop->size() > 0) {
+        while (loop->sizeApprox() > 0) {
             this_thread::sleep_for(1ms);
         }
+        this_thread::sleep_for(10ms);
         expect(x, isEqualTo(1));
     });
 
     test("Enqueueing an executable delayed executes it", [&] {
         int x = 0;
         loop->enqueueDelayed([&]{ x += 1; }, 1ms);
-        while (loop->size() > 0) {
+        while (loop->sizeApprox() > 0) {
             this_thread::sleep_for(1ms);
         }
+        this_thread::sleep_for(10ms);
         expect(x, isEqualTo(1));
     });
 
@@ -206,7 +199,7 @@ TEST_CASE(EventLoop, "EventLoop") {
         int y = 0;
 
         auto limit = steady_clock::now() + 7ms;
-        Executable func = [&x, &loop, &func, limit] {
+        EventLoopThread::Executable func = [&x, &loop, &func, limit] {
             x += 1;
             if (steady_clock::now() <= limit) {
                 loop->enqueue(func);
@@ -216,18 +209,18 @@ TEST_CASE(EventLoop, "EventLoop") {
 
         loop->enqueueDelayed([&] { y = 1; }, 5ms);
 
-        this_thread::sleep_for(10ms);
-        while (loop->size() > 0) {
+        while (y == 0) {
             this_thread::sleep_for(1ms);
         }
 
         expect(y, isEqualTo(1));
     });
 
-    test(TestConfig("Enqueueing executables from different threads")
-         .setTimeTicksLimit(10), [&] {
-        constexpr int numWorkers = 30;
-        constexpr int numJobsPerWorker = 50000;
+    multiRunTest(TestConfig("Enqueueing delayed executables from different "
+                            "threads")
+                 .setTimeTicksLimit(10), 10, [&] {
+        constexpr int numWorkers = 100;
+        constexpr int numJobsPerWorker = 1000;
 
         int x = 0;
 
@@ -243,7 +236,7 @@ TEST_CASE(EventLoop, "EventLoop") {
             workers[i]->join();
             delete workers[i];
         }
-        while (loop->size() > 0) {
+        while (x < numWorkers * numJobsPerWorker) {
             this_thread::sleep_for(1ms);
         }
         expect(x, isEqualTo(numWorkers * numJobsPerWorker));
@@ -251,18 +244,18 @@ TEST_CASE(EventLoop, "EventLoop") {
 
     test(TestConfig("A delayed invocation is never executed before "
                     "a period at least equal to its delay has passed")
-         .setTimeTicksLimit(10), [&] {
-        constexpr int numSamples = 1000;
+         .setTimeTicksLimit(50), [&] {
+        constexpr int numSamples = 10000;
         for (int i = 0; i < numSamples; ++ i) {
             nanoseconds expected = 3ms;
             auto startTime = steady_clock::now();
-            nanoseconds actual;
+            nanoseconds actual(0);
             loop->enqueueDelayed([startTime, &actual] {
                 actual = steady_clock::now() - startTime;
             }, 3ms);
 
-            while (loop->size() > 0) {
-                this_thread::sleep_for(4us);
+            while (actual.count() == 0) {
+                this_thread::sleep_for(1ms);
             }
 
             expect(actual, isGreaterThanEqual(expected));

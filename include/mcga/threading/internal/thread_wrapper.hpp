@@ -18,8 +18,8 @@ class ThreadWrapper {
         stop();
     }
 
-    std::size_t size() const {
-        return worker.size();
+    std::size_t sizeApprox() const {
+        return worker.sizeApprox();
     }
 
     bool isRunning() const {

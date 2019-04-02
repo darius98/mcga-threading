@@ -2,14 +2,15 @@
 
 #include <atomic>
 #include <chrono>
+#include <functional>
 #include <memory>
-
-#include "mcga/threading/internal/executable.hpp"
 
 namespace mcga::threading {
 
 class DelayedInvocation {
  public:
+    using Executable = std::function<void()>;
+
     using Clock = std::chrono::steady_clock;
     using Delay = std::chrono::nanoseconds;
     using DelayedInvocationPtr = std::shared_ptr<DelayedInvocation>;

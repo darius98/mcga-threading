@@ -8,7 +8,12 @@
 
 #include "mcga/threading/internal/thread_wrapper.hpp"
 
+using kktest::multiRunTest;
 using kktest::test;
+using kktest::TestConfig;
+using kktest::matchers::expect;
+using kktest::matchers::isFalse;
+using kktest::matchers::isTrue;
 using mcga::threading::internal::ThreadWrapper;
 using std::atomic_bool;
 using std::operator""ns;
@@ -46,9 +51,21 @@ bool randomBool() {
 }
 
 TEST_CASE(ThreadWrapper, "ThreadWrapper") {
-    test("Concurrent starts and stops do not break the ThreadWrapper", [&] {
-        constexpr int numWorkers = 10;
-        constexpr int numOps = 500;
+    test("Starting and stopping thread wrapper", [&] {
+        auto loop = new ThreadWrapper<BasicWorker>();
+        expect(loop->isRunning(), isFalse);
+        loop->start();
+        expect(loop->isRunning(), isTrue);
+        loop->stop();
+        expect(loop->isRunning(), isFalse);
+        delete loop;
+    });
+
+    multiRunTest(TestConfig("Concurrent starts and stops do not break the "
+                            "ThreadWrapper")
+                 .setTimeTicksLimit(10), 10, [&] {
+        constexpr int numWorkers = 50;
+        constexpr int numOps = 1000;
 
         auto loop = new ThreadWrapper<BasicWorker>();
 
@@ -68,5 +85,7 @@ TEST_CASE(ThreadWrapper, "ThreadWrapper") {
             workers[i]->join();
             delete workers[i];
         }
+
+        delete loop;
     });
 }
