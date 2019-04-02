@@ -15,9 +15,14 @@ class ThreadWrapper {
     DISALLOW_COPY_AND_MOVE(ThreadWrapper);
 
     ~ThreadWrapper() {
-        // If some other thread is STILL calling start/stop while the current
-        // thread is destroying the object, then it's undefined behaviour.
-        stop();
+        // This time, spin until we can actually stop this, and then join the
+        // worker thread.
+        //
+        // This is to ensure there is no "thread leak" after destroying the
+        // object.
+        while (isInStartOrStop.test_and_set()) {
+        }
+        stopRaw();
     }
 
     std::size_t sizeApprox() const {
@@ -57,6 +62,12 @@ class ThreadWrapper {
             // does anything. This flag is cleared at the end of the method.
             return;
         }
+        stopRaw();
+        isInStartOrStop.clear();
+    }
+
+ private:
+    void stopRaw() {
         started.store(false);
         if (workerThread.joinable()) {
             // Since no other thread can enter start() or stop() while we are
@@ -64,7 +75,6 @@ class ThreadWrapper {
             // not-joinable() at this point (between the check and the join()).
             workerThread.join();
         }
-        isInStartOrStop.clear();
     }
 
  protected:
