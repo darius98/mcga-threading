@@ -1,4 +1,4 @@
 #pragma once
 
-#include "threading/event_loop_thread.hpp"
-#include "threading/worker_thread.hpp"
+#include "mcga/threading/event_loop.hpp"
+#include "mcga/threading/worker.hpp"

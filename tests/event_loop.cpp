@@ -1,12 +1,13 @@
 #pragma ide diagnostic ignored "readability-magic-numbers"
 
-#include <random>
 #include <set>
 
 #include <kktest.hpp>
 #include <kktest_ext/matchers.hpp>
 
-#include "mcga/threading/event_loop_thread.hpp"
+#include "mcga/threading/event_loop.hpp"
+
+#include "rand_utils.hpp"
 
 using kktest::setUp;
 using kktest::tearDown;
@@ -20,6 +21,7 @@ using kktest::matchers::isGreaterThanEqual;
 using kktest::matchers::expect;
 using mcga::threading::EventLoopThread;
 using mcga::threading::DelayedInvocationPtr;
+using std::chrono::duration_cast;
 using std::chrono::microseconds;
 using std::chrono::milliseconds;
 using std::chrono::nanoseconds;
@@ -32,13 +34,6 @@ using std::vector;
 using std::operator""ms;
 using std::operator""us;
 namespace this_thread = std::this_thread;
-
-milliseconds randomDelay() {
-    static std::random_device rd;
-    static std::mt19937 generator(rd());
-    static std::uniform_int_distribution<> distribution(1, 10);
-    return milliseconds(distribution(generator));
-}
 
 ostream& operator<<(ostream& os, const milliseconds& ms) {
     os << ms.count() << "ms";
@@ -118,43 +113,36 @@ TEST_CASE(EventLoop, "EventLoop") {
     });
 
     test("Enqueueing an executable interval executes it multiple times", [&] {
-        int x = 0;
-        loop->enqueueInterval([&]{ x += 1; }, 100ms);
-        this_thread::sleep_for(105ms);
-        expect(x, isEqualTo(1));
-        this_thread::sleep_for(105ms);
-        expect(x, isEqualTo(2));
-        this_thread::sleep_for(105ms);
-        expect(x, isEqualTo(3));
-        this_thread::sleep_for(105ms);
-        expect(x, isEqualTo(4));
-        this_thread::sleep_for(105ms);
-        expect(x, isEqualTo(5));
+        vector<nanoseconds> executionDelays;
+        steady_clock::time_point startTime = steady_clock::now();
+        loop->enqueueInterval([&]{
+            executionDelays.push_back(
+                duration_cast<nanoseconds>(steady_clock::now() - startTime));
+        }, 10ms);
+
+        while (executionDelays.size() < 10) {
+            this_thread::sleep_for(5ms);
+        }
+        expect(executionDelays, hasSize(10));
+        for (size_t i = 1; i < executionDelays.size(); ++ i) {
+            expect(executionDelays[i] - executionDelays[i - 1],
+                   isGreaterThanEqual(10ms));
+        }
     });
 
-    test("Delayed executions are executed at the given time", [&] {
-        int x = 0;
+    test("Delayed executions are executed in the expected order", [&] {
+        vector<int> values;
+        loop->enqueueDelayed([&] { values.push_back(1); }, 100ms);
+        loop->enqueueDelayed([&] { values.push_back(2); }, 500ms);
+        loop->enqueueDelayed([&] { values.push_back(3); }, 400ms);
+        loop->enqueueDelayed([&] { values.push_back(4); }, 200ms);
+        loop->enqueueDelayed([&] { values.push_back(5); }, 300ms);
 
-        loop->enqueueDelayed([&] { x = 1; }, 100ms);
-        loop->enqueueDelayed([&] { x = 2; }, 500ms);
-        loop->enqueueDelayed([&] { x = 3; }, 400ms);
-        loop->enqueueDelayed([&] { x = 4; }, 200ms);
-        loop->enqueueDelayed([&] { x = 5; }, 300ms);
-
-        this_thread::sleep_for(105ms);
-        expect(x, isEqualTo(1));
-
-        this_thread::sleep_for(105ms);
-        expect(x, isEqualTo(4));
-
-        this_thread::sleep_for(105ms);
-        expect(x, isEqualTo(5));
-
-        this_thread::sleep_for(105ms);
-        expect(x, isEqualTo(3));
-
-        this_thread::sleep_for(105ms);
-        expect(x, isEqualTo(2));
+        while (values.size() < 5) {
+            this_thread::sleep_for(5ms);
+        }
+        this_thread::sleep_for(100ms);
+        expect(values, isEqualTo(vector<int>{1, 4, 5, 3, 2}));
     });
 
     test("Cancelling a delayed invocation", [&] {
@@ -173,7 +161,9 @@ TEST_CASE(EventLoop, "EventLoop") {
 
         auto invocation = loop->enqueueInterval([&] { x += 1; }, 50ms);
 
-        this_thread::sleep_for(180ms);
+        while (x < 3) {
+            this_thread::sleep_for(1ms);
+        }
 
         invocation->cancel();
 
@@ -187,9 +177,12 @@ TEST_CASE(EventLoop, "EventLoop") {
         DelayedInvocationPtr invocation = loop->enqueueInterval([&] {
             x += 1;
             invocation->cancel();
-        }, 1000us);
+        }, 10ms);
 
-        this_thread::sleep_for(10000us);
+        while (x < 1) {
+            this_thread::sleep_for(1ms);
+        }
+        this_thread::sleep_for(100ms);
         expect(x, isEqualTo(1));
     });
 

@@ -8,6 +8,7 @@
 
 #include "internal/delayed_invocation.hpp"
 #include "internal/thread_wrapper.hpp"
+#include "internal/thread_pool_wrapper.hpp"
 
 namespace mcga::threading {
 
@@ -96,6 +97,54 @@ class EventLoopThread: public internal::ThreadWrapper<EventLoop> {
             Executable&& func,
             const std::chrono::duration<_Rep, _Ratio>& delay) {
         return worker.enqueueInterval(std::move(func), delay);
+    }
+
+ private:
+    explicit EventLoopThread(volatile std::atomic_bool* started):
+            internal::ThreadWrapper<EventLoop>(started) {}
+
+ friend class internal::ThreadPoolWrapper<EventLoopThread>;
+};
+
+class EventLoopThreadPool: public internal::ThreadPoolWrapper<EventLoopThread> {
+ public:
+    using Executable = std::function<void()>;
+
+    using internal::ThreadPoolWrapper<EventLoopThread>::ThreadPoolWrapper;
+
+    DISALLOW_COPY_AND_MOVE(EventLoopThreadPool);
+
+    ~EventLoopThreadPool() = default;
+
+    void enqueue(const Executable& func);
+    void enqueue(Executable&& func);
+
+    template<class _Rep, class _Ratio>
+    DelayedInvocationPtr enqueueDelayed(
+            const Executable& func,
+            const std::chrono::duration<_Rep, _Ratio>& delay) {
+        return nextThread()->enqueueDelayed(func, delay);
+    }
+
+    template<class _Rep, class _Ratio>
+    DelayedInvocationPtr enqueueDelayed(
+            Executable&& func,
+            const std::chrono::duration<_Rep, _Ratio>& delay) {
+        return nextThread()->enqueueDelayed(std::move(func), delay);
+    }
+
+    template<class _Rep, class _Ratio>
+    DelayedInvocationPtr enqueueInterval(
+            const Executable& func,
+            const std::chrono::duration<_Rep, _Ratio>& delay) {
+        return nextThread()->enqueueInterval(func, delay);
+    }
+
+    template<class _Rep, class _Ratio>
+    DelayedInvocationPtr enqueueInterval(
+            Executable&& func,
+            const std::chrono::duration<_Rep, _Ratio>& delay) {
+        return nextThread()->enqueueInterval(std::move(func), delay);
     }
 };
 

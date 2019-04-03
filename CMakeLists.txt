@@ -13,8 +13,8 @@ include(FindThreads)
 
 add_library(mcga_threading STATIC
     src/delayed_invocation.cpp
-    src/event_loop_thread.cpp
-    src/worker_thread.cpp
+    src/event_loop.cpp
+    src/worker.cpp
 )
 target_include_directories(mcga_threading PUBLIC third_party/concurrentqueue)
 target_include_directories(mcga_threading PUBLIC third_party/readerwriterqueue)
@@ -38,8 +38,11 @@ if (BuildTests)
 
     add_executable(mcga_threading_test
         tests/event_loop.cpp
+        tests/event_loop_pool.cpp
+        tests/thread_pool_wrapper.cpp
         tests/thread_wrapper.cpp
         tests/worker.cpp
+        tests/worker_pool.cpp
     )
     target_link_directories(mcga_threading_test PRIVATE /usr/local/lib)
     target_include_directories(mcga_threading_test PRIVATE /usr/local/include)

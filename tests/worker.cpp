@@ -1,12 +1,11 @@
 #pragma ide diagnostic ignored "readability-magic-numbers"
 
-#include <random>
 #include <vector>
 
 #include <kktest.hpp>
 #include <kktest_ext/matchers.hpp>
 
-#include "mcga/threading/worker_thread.hpp"
+#include "mcga/threading/worker.hpp"
 
 using kktest::multiRunTest;
 using kktest::setUp;

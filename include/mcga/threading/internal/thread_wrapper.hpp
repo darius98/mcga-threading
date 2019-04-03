@@ -10,19 +10,24 @@ namespace mcga::threading::internal {
 template<class W>
 class ThreadWrapper {
  public:
-    ThreadWrapper() = default;
+    ThreadWrapper() {
+        started = new std::atomic_bool(false);
+    }
+
+    explicit ThreadWrapper(volatile std::atomic_bool* started):
+            ownStartedFlag(false), started(started) {}
 
     DISALLOW_COPY_AND_MOVE(ThreadWrapper);
 
     ~ThreadWrapper() {
         // This time, spin until we can actually stop this, and then join the
         // worker thread.
-        //
-        // This is to ensure there is no "thread leak" after destroying the
-        // object.
         while (isInStartOrStop.test_and_set()) {
         }
         stopRaw();
+        if (ownStartedFlag) {
+            delete started;
+        }
     }
 
     std::size_t sizeApprox() const {
@@ -30,7 +35,7 @@ class ThreadWrapper {
     }
 
     bool isRunning() const {
-        return started;
+        return started->load();
     }
 
     void start() {
@@ -39,18 +44,24 @@ class ThreadWrapper {
             // does anything. This flag is cleared at the end of the method.
             return;
         }
-        if (!started) {
-            try {
+        if (ownStartedFlag) {
+            if (!started->load()) {
                 workerThread = std::thread([this]() {
-                    started.store(true);
-                    worker.start(&started);
+                    started->store(true);
+                    worker.start(started);
                 });
-            } catch(const std::system_error& err) {
-                isInStartOrStop.clear();
-                throw err;
+                while (!started->load()) {
+                    std::this_thread::yield();
+                }
             }
-            while (!started) {
-                std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+        } else {
+            std::atomic_bool localStarted = false;
+            workerThread = std::thread([this, &localStarted]() {
+                localStarted.store(true);
+                worker.start(started);
+            });
+            while (!localStarted.load()) {
+                std::this_thread::yield();
             }
         }
         isInStartOrStop.clear();
@@ -68,7 +79,9 @@ class ThreadWrapper {
 
  private:
     void stopRaw() {
-        started.store(false);
+        if (ownStartedFlag) {
+            started->store(false);
+        }
         if (workerThread.joinable()) {
             // Since no other thread can enter start() or stop() while we are
             // here, nothing can happen that turns joinable() into
@@ -82,7 +95,8 @@ class ThreadWrapper {
 
  private:
     std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
-    std::atomic_bool started = false;
+    bool ownStartedFlag = true;
+    volatile std::atomic_bool* started;
     std::thread workerThread;
 };
 

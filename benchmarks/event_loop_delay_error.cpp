@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#include <mcga/threading/event_loop_thread.hpp>
+#include <mcga/threading.hpp>
 
 using namespace mcga::threading;
 using namespace std;
@@ -84,11 +84,13 @@ int main(int argc, char** argv) {
 
     for (int i = 0; i < numSamples; ++ i) {
         Stopwatch watch;
-        loop.enqueueDelayed([&tracker, watch]() {
+        bool done = false;
+        loop.enqueueDelayed([&tracker, watch, &done]() {
             watch.track(&tracker, 3ms);
+            done = true;
         }, 3ms);
-        while (loop.size() > 0) {
-            this_thread::sleep_for(100us);
+        while (!done) {
+            this_thread::yield();
         }
     }
 

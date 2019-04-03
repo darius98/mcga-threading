@@ -1,4 +1,4 @@
-#include "mcga/threading/event_loop_thread.hpp"
+#include "mcga/threading/event_loop.hpp"
 
 #include "mcga/threading/internal/loop_tick_duration.hpp"
 
@@ -115,6 +115,14 @@ void EventLoopThread::enqueue(const Executable& func) {
 
 void EventLoopThread::enqueue(Executable&& func) {
     worker.enqueue(move(func));
+}
+
+void EventLoopThreadPool::enqueue(const Executable& func) {
+    nextThread()->enqueue(func);
+}
+
+void EventLoopThreadPool::enqueue(Executable&& func) {
+    nextThread()->enqueue(move(func));
 }
 
 }  // namespace mcga::threading

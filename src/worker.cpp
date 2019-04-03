@@ -1,4 +1,4 @@
-#include "mcga/threading/worker_thread.hpp"
+#include "mcga/threading/worker.hpp"
 
 #include "mcga/threading/internal/loop_tick_duration.hpp"
 
@@ -51,6 +51,14 @@ void WorkerThread::enqueue(const Executable& func) {
 
 void WorkerThread::enqueue(Executable&& func) {
     worker.enqueue(move(func));
+}
+
+void WorkerThreadPool::enqueue(const Executable& func) {
+    nextThread()->enqueue(func);
+}
+
+void WorkerThreadPool::enqueue(Executable&& func) {
+    nextThread()->enqueue(move(func));
 }
 
 }  // namespace mcga::threading
