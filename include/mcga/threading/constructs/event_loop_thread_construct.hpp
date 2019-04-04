@@ -5,7 +5,6 @@
 #include <concurrentqueue.h>
 
 #include <mcga/threading/base/thread_wrapper.hpp>
-#include <mcga/threading/base/thread_pool_wrapper.hpp>
 
 namespace mcga::threading::constructs {
 

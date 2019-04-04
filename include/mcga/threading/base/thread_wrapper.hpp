@@ -10,12 +10,17 @@ namespace mcga::threading::base {
 template<class W>
 class ThreadWrapper {
  public:
-    ThreadWrapper() {
+    template<class... Args>
+    explicit ThreadWrapper(volatile std::atomic_bool* started, Args&&... args):
+            worker(std::forward<Args>(args)...),
+            ownStartedFlag(false),
+            started(started) {}
+
+    template<class... Args>
+    explicit ThreadWrapper(Args&&... args):
+            worker(std::forward<Args>(args)...) {
         started = new std::atomic_bool(false);
     }
-
-    explicit ThreadWrapper(volatile std::atomic_bool* started):
-            ownStartedFlag(false), started(started) {}
 
     MCGA_THREADING_DISALLOW_COPY_AND_MOVE(ThreadWrapper);
 

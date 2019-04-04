@@ -54,4 +54,4 @@ class EventLoopThreadPoolConstruct : public base::ThreadPoolWrapper<W> {
     }
 };
 
-}
+}  // namespace mcga::threading::constructs

@@ -10,11 +10,14 @@ namespace mcga::threading::base {
 template<class Thread>
 class ThreadPoolWrapper {
  public:
+    template<class... Args>
     explicit ThreadPoolWrapper(
+            Args&&... args,
             std::size_t numThreads = std::thread::hardware_concurrency()) {
         threads.reserve(numThreads);
         for (int i = 0; i < numThreads; i += 1) {
-            threads.push_back(new Thread(&started));
+            threads.push_back(
+                new Thread(&started, std::forward<Args>(args)...));
         }
     }
 
@@ -84,7 +87,7 @@ class ThreadPoolWrapper {
 
  private:
     std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
-    std::atomic_bool started = false;
+    volatile std::atomic_bool started = false;
     std::vector<Thread*> threads;
 };
 
