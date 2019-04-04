@@ -10,7 +10,7 @@
 namespace mcga::threading::internal {
 
 template<class Exec>
-class WorkerConstruct: public Exec {
+class WorkerConstruct : private Exec {
  public:
     using Object = typename Exec::Object;
 

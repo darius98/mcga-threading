@@ -1,151 +1,26 @@
 #pragma once
 
-#include <mutex>
-#include <queue>
-#include <thread>
+#include <functional>
 
-#include <concurrentqueue.h>
-
-#include "internal/delayed_invocation.hpp"
-#include "internal/thread_wrapper.hpp"
-#include "internal/thread_pool_wrapper.hpp"
+#include "internal/event_loop_construct.hpp"
 
 namespace mcga::threading {
 
-class EventLoop {
- private:
-    using Executable = DelayedInvocation::Executable;
+namespace internal {
 
-    EventLoop();
-    ~EventLoop() = default;
-
-    DISALLOW_COPY_AND_MOVE(EventLoop);
-
-    std::size_t sizeApprox() const;
-
-    void start(volatile std::atomic_bool* running);
-
-    void enqueue(const Executable& func);
-    void enqueue(Executable&& func);
-
-    DelayedInvocationPtr enqueueDelayed(const Executable& func,
-                                        const DelayedInvocation::Delay& delay);
-    DelayedInvocationPtr enqueueDelayed(Executable&& func,
-                                        const DelayedInvocation::Delay& delay);
-
-    DelayedInvocationPtr enqueueInterval(const Executable& func,
-                                         const DelayedInvocation::Delay& delay);
-    DelayedInvocationPtr enqueueInterval(Executable&& func,
-                                         const DelayedInvocation::Delay& delay);
-
-    DelayedInvocationPtr enqueue(DelayedInvocationPtr invocation);
-
-    void executePending();
-
-    std::size_t getDelayedQueueSize() const;
-    DelayedInvocationPtr popDelayedQueue();
-
-    moodycamel::ConcurrentQueue<Executable> immediateQueue;
-    moodycamel::ConsumerToken immediateQueueToken;
-    std::vector<Executable> immediateQueueBuffer;
-    std::atomic_size_t numImmediateDequeued = 0;
-
-    mutable std::mutex delayedQueueLock;
-    std::priority_queue<DelayedInvocationPtr,
-                        std::vector<DelayedInvocationPtr>,
-                        DelayedInvocation::Compare> delayedQueue;
-
-friend class internal::ThreadWrapper<EventLoop>;
-friend class EventLoopThread;
-};
-
-class EventLoopThread: public internal::ThreadWrapper<EventLoop> {
+class WorkerExec2 {
  public:
-    using Executable = EventLoop::Executable;
+    using Object = std::function<void()>;
 
-    EventLoopThread() = default;
-    ~EventLoopThread() = default;
-
-    DISALLOW_COPY_AND_MOVE(EventLoopThread);
-
-    void enqueue(const Executable& func);
-    void enqueue(Executable&& func);
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueDelayed(
-            const Executable& func,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return worker.enqueueDelayed(func, delay);
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueDelayed(
-            Executable&& func,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return worker.enqueueDelayed(std::move(func), delay);
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueInterval(
-            const Executable& func,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return worker.enqueueInterval(func, delay);
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueInterval(
-            Executable&& func,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return worker.enqueueInterval(std::move(func), delay);
-    }
-
- private:
-    explicit EventLoopThread(volatile std::atomic_bool* started):
-            internal::ThreadWrapper<EventLoop>(started) {}
-
- friend class internal::ThreadPoolWrapper<EventLoopThread>;
-};
-
-class EventLoopThreadPool: public internal::ThreadPoolWrapper<EventLoopThread> {
- public:
-    using Executable = std::function<void()>;
-
-    using internal::ThreadPoolWrapper<EventLoopThread>::ThreadPoolWrapper;
-
-    DISALLOW_COPY_AND_MOVE(EventLoopThreadPool);
-
-    ~EventLoopThreadPool() = default;
-
-    void enqueue(const Executable& func);
-    void enqueue(Executable&& func);
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueDelayed(
-            const Executable& func,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return nextThread()->enqueueDelayed(func, delay);
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueDelayed(
-            Executable&& func,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return nextThread()->enqueueDelayed(std::move(func), delay);
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueInterval(
-            const Executable& func,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return nextThread()->enqueueInterval(func, delay);
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueInterval(
-            Executable&& func,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return nextThread()->enqueueInterval(std::move(func), delay);
+    static void handleObject(const Object& obj) {
+        obj();
     }
 };
+
+}  // namespace internal
+
+using EventLoop = internal::EventLoopConstruct<internal::WorkerExec2>;
+using EventLoopThread = internal::EventLoopThreadConstruct<EventLoop>;
+using EventLoopThreadPool = internal::EventLoopThreadPoolConstruct<EventLoopThread>;
 
 }  // namespace mcga::threading

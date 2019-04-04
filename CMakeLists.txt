@@ -11,14 +11,13 @@ option(BuildBenchmarks "Build the benchmarks" OFF)
 
 include(FindThreads)
 
-add_library(mcga_threading STATIC
-    src/delayed_invocation.cpp
-    src/event_loop.cpp
+add_library(mcga_threading INTERFACE)
+target_include_directories(mcga_threading
+    INTERFACE third_party/concurrentqueue
+    INTERFACE third_party/readerwriterqueue
+    INTERFACE include
 )
-target_include_directories(mcga_threading PUBLIC third_party/concurrentqueue)
-target_include_directories(mcga_threading PUBLIC third_party/readerwriterqueue)
-target_include_directories(mcga_threading PUBLIC include)
-target_link_libraries(mcga_threading PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(mcga_threading INTERFACE ${CMAKE_THREAD_LIBS_INIT})
 
 install(DIRECTORY include DESTINATION .)
 install(FILES third_party/concurrentqueue/concurrentqueue.h

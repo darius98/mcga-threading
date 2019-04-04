@@ -20,7 +20,6 @@ using kktest::matchers::isNotEqualTo;
 using kktest::matchers::isGreaterThanEqual;
 using kktest::matchers::expect;
 using mcga::threading::EventLoopThread;
-using mcga::threading::DelayedInvocationPtr;
 using std::chrono::duration_cast;
 using std::chrono::microseconds;
 using std::chrono::milliseconds;
@@ -174,7 +173,8 @@ TEST_CASE(EventLoop, "EventLoop") {
     test("Cancelling an interval within the interval", [&] {
         int x = 0;
 
-        DelayedInvocationPtr invocation = loop->enqueueInterval([&] {
+        EventLoopThread::DelayedInvocationPtr invocation
+                = loop->enqueueInterval([&] {
             x += 1;
             invocation->cancel();
         }, 10ms);
@@ -192,7 +192,7 @@ TEST_CASE(EventLoop, "EventLoop") {
         int y = 0;
 
         auto limit = steady_clock::now() + 7ms;
-        EventLoopThread::Executable func = [&x, &loop, &func, limit] {
+        EventLoopThread::Object func = [&x, &loop, &func, limit] {
             x += 1;
             if (steady_clock::now() <= limit) {
                 loop->enqueue(func);

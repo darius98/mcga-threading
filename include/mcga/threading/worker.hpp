@@ -1,11 +1,5 @@
 #pragma once
 
-#include <vector>
-
-#include <concurrentqueue.h>
-
-#include "internal/thread_pool_wrapper.hpp"
-#include "internal/thread_wrapper.hpp"
 #include "internal/worker_construct.hpp"
 
 namespace mcga::threading {
