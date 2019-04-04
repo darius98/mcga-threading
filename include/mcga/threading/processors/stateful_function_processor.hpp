@@ -8,7 +8,7 @@ namespace mcga::threading::processors {
 template<class... Args>
 class StatefulFunctionProcessor {
  public:
-    using Object = void (*)(Args&&...);
+    using Object = void (*)(Args...);
 
     explicit StatefulFunctionProcessor(Args&&... args):
             args(std::forward<Args>(args)...) {}
