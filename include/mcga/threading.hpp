@@ -11,6 +11,8 @@
 // Processors
 #include <mcga/threading/processors/function_processor.hpp>
 #include <mcga/threading/processors/object_processor.hpp>
+#include <mcga/threading/processors/stateful_function_processor.hpp>
+#include <mcga/threading/processors/stateless_function_processor.hpp>
 
 #define DEFINE_CONSTRUCTS(PROCESSOR, PREFIX)                                   \
     using PREFIX##Worker                                                       \
@@ -50,6 +52,8 @@ namespace mcga::threading {
 
 DEFINE_CONSTRUCTS(FunctionProcessor, );
 DEFINE_TEMPLATE_CONSTRUCTS(ObjectProcessor, ObjectProcessing);
+DEFINE_TEMPLATE_CONSTRUCTS(StatefulFunctionProcessor, Stateful);
+DEFINE_CONSTRUCTS(StatelessFunctionProcessor, Stateless);
 
 }  // namespace mcga::threading
 
