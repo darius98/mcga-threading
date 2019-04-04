@@ -51,7 +51,7 @@
 namespace mcga::threading {
 
 DEFINE_CONSTRUCTS(FunctionProcessor, );
-DEFINE_TEMPLATE_CONSTRUCTS(ObjectProcessor, ObjectProcessing);
+DEFINE_TEMPLATE_CONSTRUCTS(ObjectProcessor, Object);
 DEFINE_TEMPLATE_CONSTRUCTS(StatefulFunctionProcessor, Stateful);
 DEFINE_CONSTRUCTS(StatelessFunctionProcessor, Stateless);
 
