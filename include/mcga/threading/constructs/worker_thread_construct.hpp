@@ -9,10 +9,11 @@ class WorkerThreadConstruct : public base::ThreadWrapper<W> {
  public:
     using Object = typename W::Object;
 
-    WorkerThreadConstruct() = default;
-    ~WorkerThreadConstruct() = default;
+    using base::ThreadWrapper<W>::ThreadWrapper;
 
-    DISALLOW_COPY_AND_MOVE(WorkerThreadConstruct);
+    MCGA_THREADING_DISALLOW_COPY_AND_MOVE(WorkerThreadConstruct);
+
+    ~WorkerThreadConstruct() = default;
 
     void enqueue(const Object& func) {
         this->worker.enqueue(func);
@@ -21,12 +22,6 @@ class WorkerThreadConstruct : public base::ThreadWrapper<W> {
     void enqueue(Object&& func) {
         this->worker.enqueue(std::move(func));
     }
-
- private:
-    explicit WorkerThreadConstruct(volatile std::atomic_bool* running):
-            base::ThreadWrapper<W>(running) {}
-
- friend class base::ThreadPoolWrapper<WorkerThreadConstruct>;
 };
 
 }  // namespace mcga::threading::constructs

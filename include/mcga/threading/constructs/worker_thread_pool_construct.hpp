@@ -11,7 +11,7 @@ class WorkerThreadPoolConstruct : public base::ThreadPoolWrapper<W> {
 
     using base::ThreadPoolWrapper<W>::ThreadPoolWrapper;
 
-    DISALLOW_COPY_AND_MOVE(WorkerThreadPoolConstruct);
+    MCGA_THREADING_DISALLOW_COPY_AND_MOVE(WorkerThreadPoolConstruct);
 
     ~WorkerThreadPoolConstruct() = default;
 

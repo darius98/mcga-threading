@@ -18,7 +18,7 @@ class ThreadPoolWrapper {
         }
     }
 
-    DISALLOW_COPY_AND_MOVE(ThreadPoolWrapper);
+    MCGA_THREADING_DISALLOW_COPY_AND_MOVE(ThreadPoolWrapper);
 
     ~ThreadPoolWrapper() {
         // This time, spin until we can actually stop this, and then join the

@@ -1,10 +1,6 @@
 #pragma once
 
-#include <atomic>
 #include <chrono>
-#include <vector>
-#include <thread>
-#include <queue>
 
 #include <concurrentqueue.h>
 
@@ -20,9 +16,9 @@ class EventLoopThreadConstruct : public base::ThreadWrapper<W> {
     using DelayedInvocation = typename W::DelayedInvocation;
     using DelayedInvocationPtr = typename W::DelayedInvocationPtr;
 
-    EventLoopThreadConstruct() = default;
+    using base::ThreadWrapper<W>::ThreadWrapper;
 
-    DISALLOW_COPY_AND_MOVE(EventLoopThreadConstruct);
+    MCGA_THREADING_DISALLOW_COPY_AND_MOVE(EventLoopThreadConstruct);
 
     ~EventLoopThreadConstruct() = default;
 
@@ -61,12 +57,6 @@ class EventLoopThreadConstruct : public base::ThreadWrapper<W> {
             const std::chrono::duration<_Rep, _Ratio>& delay) {
         return this->worker.enqueueInterval(std::move(obj), delay);
     }
-
- private:
-    explicit EventLoopThreadConstruct(volatile std::atomic_bool* started):
-            base::ThreadWrapper<W>(started) {}
-
- friend class base::ThreadPoolWrapper<EventLoopThreadConstruct>;
 };
 
 }  // namespace mcga::threading::constructs

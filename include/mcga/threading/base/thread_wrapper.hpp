@@ -17,7 +17,7 @@ class ThreadWrapper {
     explicit ThreadWrapper(volatile std::atomic_bool* started):
             ownStartedFlag(false), started(started) {}
 
-    DISALLOW_COPY_AND_MOVE(ThreadWrapper);
+    MCGA_THREADING_DISALLOW_COPY_AND_MOVE(ThreadWrapper);
 
     ~ThreadWrapper() {
         // This time, spin until we can actually stop this, and then join the

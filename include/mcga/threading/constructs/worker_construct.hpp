@@ -15,9 +15,9 @@ class WorkerConstruct : private Exec {
  public:
     using Object = typename Exec::Object;
 
-    WorkerConstruct(): Exec(), queueConsumerToken(queue) {}
+    using Exec::Exec;
 
-    DISALLOW_COPY_AND_MOVE(WorkerConstruct);
+    MCGA_THREADING_DISALLOW_COPY_AND_MOVE(WorkerConstruct);
 
     ~WorkerConstruct() = default;
 
@@ -59,7 +59,7 @@ class WorkerConstruct : private Exec {
     }
 
     moodycamel::ConcurrentQueue<Object> queue;
-    moodycamel::ConsumerToken queueConsumerToken;
+    moodycamel::ConsumerToken queueConsumerToken{queue};
     std::vector<Object> queueBuffer;
     std::atomic_size_t numBuffered = 0;
 };

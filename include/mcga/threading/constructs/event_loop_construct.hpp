@@ -82,9 +82,9 @@ class EventLoopConstruct : private Exec {
      friend class EventLoopConstruct;
     };
 
-    EventLoopConstruct(): immediateQueueToken(immediateQueue) {}
+    using Exec::Exec;
 
-    DISALLOW_COPY_AND_MOVE(EventLoopConstruct);
+    MCGA_THREADING_DISALLOW_COPY_AND_MOVE(EventLoopConstruct);
 
     ~EventLoopConstruct() = default;
 
@@ -184,7 +184,7 @@ class EventLoopConstruct : private Exec {
     }
 
     moodycamel::ConcurrentQueue<Object> immediateQueue;
-    moodycamel::ConsumerToken immediateQueueToken;
+    moodycamel::ConsumerToken immediateQueueToken{immediateQueue};
     std::vector<Object> immediateQueueBuffer;
     std::atomic_size_t numImmediateDequeued = 0;
 

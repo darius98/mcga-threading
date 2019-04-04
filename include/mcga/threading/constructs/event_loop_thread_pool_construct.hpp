@@ -13,7 +13,7 @@ class EventLoopThreadPoolConstruct : public base::ThreadPoolWrapper<W> {
 
     using base::ThreadPoolWrapper<W>::ThreadPoolWrapper;
 
-    DISALLOW_COPY_AND_MOVE(EventLoopThreadPoolConstruct);
+    MCGA_THREADING_DISALLOW_COPY_AND_MOVE(EventLoopThreadPoolConstruct);
 
     ~EventLoopThreadPoolConstruct() = default;
 

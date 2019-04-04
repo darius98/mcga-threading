@@ -14,48 +14,60 @@
 #include <mcga/threading/processors/stateful_function_processor.hpp>
 #include <mcga/threading/processors/stateless_function_processor.hpp>
 
-#define DEFINE_CONSTRUCTS(PROCESSOR, PREFIX)                                   \
+#define MCGA_THREADING_DEFINE_CONSTRUCTS(PROCESSOR, PREFIX)                    \
     using PREFIX##Worker                                                       \
-        = constructs::WorkerConstruct<processors::PROCESSOR>;                  \
+        = constructs::WorkerConstruct<PROCESSOR>;                              \
+                                                                               \
     using PREFIX##WorkerThread                                                 \
         = constructs::WorkerThreadConstruct<PREFIX##Worker>;                   \
+                                                                               \
     using PREFIX##WorkerThreadPool                                             \
         = constructs::WorkerThreadPoolConstruct<PREFIX##WorkerThread>;         \
+                                                                               \
     using PREFIX##EventLoop                                                    \
-        = constructs::EventLoopConstruct<processors::PROCESSOR>;               \
+        = constructs::EventLoopConstruct<PROCESSOR>;                           \
+                                                                               \
     using PREFIX##EventLoopThread                                              \
         = constructs::EventLoopThreadConstruct<PREFIX##EventLoop>;             \
+                                                                               \
     using PREFIX##EventLoopThreadPool                                          \
         = constructs::EventLoopThreadPoolConstruct<PREFIX##EventLoopThread>
 
-#define DEFINE_TEMPLATE_CONSTRUCTS(PROCESSOR, PREFIX)                          \
+#define MCGA_THREADING_DEFINE_TEMPLATE_CONSTRUCTS(PROCESSOR, PREFIX)           \
     template<class T>                                                          \
     using PREFIX##Worker                                                       \
-            = constructs::WorkerConstruct<processors::PROCESSOR<T>>;           \
+            = constructs::WorkerConstruct<PROCESSOR<T>>;                       \
+                                                                               \
     template<class T>                                                          \
     using PREFIX##WorkerThread                                                 \
         = constructs::WorkerThreadConstruct<PREFIX##Worker<T>>;                \
+                                                                               \
     template<class T>                                                          \
     using PREFIX##WorkerThreadPool                                             \
         = constructs::WorkerThreadPoolConstruct<PREFIX##WorkerThread<T>>;      \
+                                                                               \
     template<class T>                                                          \
     using PREFIX##EventLoop                                                    \
-        = constructs::EventLoopConstruct<processors::PROCESSOR<T>>;            \
+        = constructs::EventLoopConstruct<PROCESSOR<T>>;                        \
+                                                                               \
     template<class T>                                                          \
     using PREFIX##EventLoopThread                                              \
         = constructs::EventLoopThreadConstruct<PREFIX##EventLoop<T>>;          \
+                                                                               \
     template<class T>                                                          \
     using PREFIX##EventLoopThreadPool                                          \
         = constructs::EventLoopThreadPoolConstruct<PREFIX##EventLoopThread<T>>
 
 namespace mcga::threading {
 
-DEFINE_CONSTRUCTS(FunctionProcessor, );
-DEFINE_TEMPLATE_CONSTRUCTS(ObjectProcessor, Object);
-DEFINE_TEMPLATE_CONSTRUCTS(StatefulFunctionProcessor, Stateful);
-DEFINE_CONSTRUCTS(StatelessFunctionProcessor, Stateless);
+MCGA_THREADING_DEFINE_CONSTRUCTS(processors::FunctionProcessor, );
+
+MCGA_THREADING_DEFINE_TEMPLATE_CONSTRUCTS(processors::ObjectProcessor, Object);
+
+MCGA_THREADING_DEFINE_TEMPLATE_CONSTRUCTS(
+        processors::StatefulFunctionProcessor, Stateful);
+
+MCGA_THREADING_DEFINE_CONSTRUCTS(
+        processors::StatelessFunctionProcessor, Stateless);
 
 }  // namespace mcga::threading
-
-#undef DEFINE_CONSTRUCTS
-#undef DEFINE_TEMPLATE_CONSTRUCTS
