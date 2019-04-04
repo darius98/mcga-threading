@@ -14,7 +14,6 @@ include(FindThreads)
 add_library(mcga_threading STATIC
     src/delayed_invocation.cpp
     src/event_loop.cpp
-    src/worker.cpp
 )
 target_include_directories(mcga_threading PUBLIC third_party/concurrentqueue)
 target_include_directories(mcga_threading PUBLIC third_party/readerwriterqueue)
