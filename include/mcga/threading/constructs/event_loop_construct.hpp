@@ -1,15 +1,16 @@
 #pragma once
 
+#include <atomic>
 #include <queue>
+#include <thread>
+#include <vector>
 
 #include <concurrentqueue.h>
 
-#include "disallow_copy_and_move.hpp"
-#include "loop_tick_duration.hpp"
-#include "thread_pool_wrapper.hpp"
-#include "thread_wrapper.hpp"
+#include <mcga/threading/base/disallow_copy_and_move.hpp>
+#include <mcga/threading/base/loop_tick_duration.hpp>
 
-namespace mcga::threading::internal {
+namespace mcga::threading::constructs {
 
 template<class Exec>
 class EventLoopConstruct : private Exec {
@@ -67,12 +68,6 @@ class EventLoopConstruct : private Exec {
             return timePoint <= Clock::now();
         }
 
-        void executeIfNotCancelled() {
-            if (!cancelled) {
-                obj();
-            }
-        }
-
         void setTimePoint() {
             timePoint = Clock::now()
                         + std::chrono::duration_cast<Clock::duration>(delay);
@@ -102,7 +97,7 @@ class EventLoopConstruct : private Exec {
     void start(volatile std::atomic_bool* running) {
         while (running->load()) {
             run();
-            std::this_thread::sleep_for(loopTickDuration);
+            std::this_thread::sleep_for(base::loopTickDuration);
         }
     }
 
@@ -143,7 +138,9 @@ class EventLoopConstruct : private Exec {
     void run() {
         auto delayedInvocation = popDelayedQueue();
         if (delayedInvocation != nullptr) {
-            delayedInvocation->executeIfNotCancelled();
+            if (!delayedInvocation->isCancelled()) {
+                this->handleObject(delayedInvocation->obj);
+            }
             if (!delayedInvocation->isCancelled()
                 && delayedInvocation->isInterval()) {
                 delayedInvocation->setTimePoint();
@@ -197,110 +194,4 @@ class EventLoopConstruct : private Exec {
                         typename DelayedInvocation::Compare> delayedQueue;
 };
 
-template<class W>
-class EventLoopThreadConstruct : public ThreadWrapper<W> {
- public:
-    using Object = typename W::Object;
-    using DelayedInvocation = typename W::DelayedInvocation;
-    using DelayedInvocationPtr = typename W::DelayedInvocationPtr;
-
-    EventLoopThreadConstruct() = default;
-
-    DISALLOW_COPY_AND_MOVE(EventLoopThreadConstruct);
-
-    ~EventLoopThreadConstruct() = default;
-
-    void enqueue(const Object& obj) {
-        this->worker.enqueue(obj);
-    }
-
-    void enqueue(Object&& obj) {
-        this->worker.enqueue(std::move(obj));
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueDelayed(
-            const Object& obj,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return this->worker.enqueueDelayed(obj, delay);
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueDelayed(
-            Object&& obj,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return this->worker.enqueueDelayed(std::move(obj), delay);
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueInterval(
-            const Object& obj,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return this->worker.enqueueInterval(obj, delay);
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueInterval(
-            Object&& obj,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return this->worker.enqueueInterval(std::move(obj), delay);
-    }
-
- private:
-    explicit EventLoopThreadConstruct(volatile std::atomic_bool* started):
-            ThreadWrapper<W>(started) {}
-
- friend class ThreadPoolWrapper<EventLoopThreadConstruct>;
-};
-
-template<class W>
-class EventLoopThreadPoolConstruct : public ThreadPoolWrapper<W> {
- public:
-    using Object = typename W::Object;
-    using DelayedInvocation = typename W::DelayedInvocation;
-    using DelayedInvocationPtr = typename W::DelayedInvocationPtr;
-
-    using ThreadPoolWrapper<W>::ThreadPoolWrapper;
-
-    DISALLOW_COPY_AND_MOVE(EventLoopThreadPoolConstruct);
-
-    ~EventLoopThreadPoolConstruct() = default;
-
-    void enqueue(const Object& func) {
-        this->nextThread()->enqueue(func);
-    }
-
-    void enqueue(Object&& func) {
-        this->nextThread()->enqueue(std::move(func));
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueDelayed(
-            const Object& obj,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return this->nextThread()->enqueueDelayed(obj, delay);
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueDelayed(
-            Object&& obj,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return this->nextThread()->enqueueDelayed(std::move(obj), delay);
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueInterval(
-            const Object& obj,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return this->nextThread()->enqueueInterval(obj, delay);
-    }
-
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueInterval(
-            Object&& obj,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return this->nextThread()->enqueueInterval(std::move(obj), delay);
-    }
-};
-
-}  // namespace mcga::threading::internal
+}  // namespace mcga::threading::constructs

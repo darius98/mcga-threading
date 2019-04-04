@@ -1,10 +1,11 @@
 #pragma once
 
 #include <atomic>
+#include <thread>
 
-#include "disallow_copy_and_move.hpp"
+#include <mcga/threading/base/disallow_copy_and_move.hpp>
 
-namespace mcga::threading::internal {
+namespace mcga::threading::base {
 
 template<class Thread>
 class ThreadPoolWrapper {
@@ -87,4 +88,4 @@ class ThreadPoolWrapper {
     std::vector<Thread*> threads;
 };
 
-}  // namespace mcga::threading::internal
+}  // namespace mcga::threading::base

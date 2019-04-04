@@ -7,7 +7,7 @@
 #include <kktest.hpp>
 #include <kktest_ext/matchers.hpp>
 
-#include "mcga/threading/event_loop.hpp"
+#include <mcga/threading.hpp>
 
 #include "rand_utils.hpp"
 

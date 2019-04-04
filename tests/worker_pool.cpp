@@ -7,7 +7,7 @@
 #include <kktest.hpp>
 #include <kktest_ext/matchers.hpp>
 
-#include "mcga/threading/worker.hpp"
+#include <mcga/threading.hpp>
 
 using kktest::setUp;
 using kktest::tearDown;

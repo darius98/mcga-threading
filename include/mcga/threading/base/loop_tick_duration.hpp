@@ -2,8 +2,8 @@
 
 #include <chrono>
 
-namespace mcga::threading::internal {
+namespace mcga::threading::base {
 
 constexpr auto loopTickDuration = std::chrono::nanoseconds(20);
 
-} // namespace mcga::threading::internal
+} // namespace mcga::threading::base

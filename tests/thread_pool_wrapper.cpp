@@ -5,8 +5,7 @@
 #include <kktest.hpp>
 #include <kktest_ext/matchers.hpp>
 
-#include "mcga/threading/internal/thread_wrapper.hpp"
-#include "mcga/threading/internal/thread_pool_wrapper.hpp"
+#include <mcga/threading.hpp>
 
 #include "rand_utils.hpp"
 
@@ -15,8 +14,8 @@ using kktest::test;
 using kktest::matchers::expect;
 using kktest::matchers::isFalse;
 using kktest::matchers::isTrue;
-using mcga::threading::internal::ThreadPoolWrapper;
-using mcga::threading::internal::ThreadWrapper;
+using mcga::threading::base::ThreadPoolWrapper;
+using mcga::threading::base::ThreadWrapper;
 using std::atomic_bool;
 using std::operator""ns;
 using std::size_t;
