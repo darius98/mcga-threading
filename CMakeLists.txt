@@ -8,6 +8,7 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 option(BuildTests "Build tests using the KKTest library" OFF)
 option(BuildBenchmarks "Build the benchmarks" OFF)
+option(BenchmarkAgainstEvpp "Include the evpp library's EventLoop and EventLoopPool in the benchmark" OFF)
 
 include(FindThreads)
 
@@ -54,4 +55,12 @@ if (BuildBenchmarks)
     endfunction ()
 
     add_benchmark(event_loop_delay_error benchmarks/event_loop_delay_error.cpp)
+    add_benchmark(simple_function benchmarks/simple_function.cpp)
+    if (BenchmarkAgainstEvpp)
+        target_compile_definitions(simple_function_benchmark PUBLIC LINK_EVPP)
+        target_include_directories(simple_function_benchmark PUBLIC /usr/local/include)
+        target_include_directories(simple_function_benchmark PUBLIC benchmarks) # Trick evpp into thinking I have glog :)
+        target_link_directories(simple_function_benchmark PUBLIC /usr/local/lib)
+        target_link_libraries(simple_function_benchmark evpp_static event)
+    endif()
 endif ()

@@ -10,6 +10,8 @@ namespace mcga::threading::base {
 template<class W>
 class ThreadWrapper {
  public:
+    // TODO(darius98): This is ambiguous when worker takes a
+    //  `volatile std::atomic_bool*` argument.
     template<class... Args>
     explicit ThreadWrapper(volatile std::atomic_bool* started, Args&&... args):
             worker(std::forward<Args>(args)...),

@@ -10,12 +10,21 @@ namespace mcga::threading::base {
 template<class Thread>
 class ThreadPoolWrapper {
  public:
+    // TODO(darius98): This is ambiguous when Worker takes a `std::size_t`
+    //  argument.
     template<class... Args>
-    explicit ThreadPoolWrapper(
-            Args&&... args,
-            std::size_t numThreads = std::thread::hardware_concurrency()) {
+    explicit ThreadPoolWrapper(Args&&... args, std::size_t numThreads) {
         threads.reserve(numThreads);
         for (int i = 0; i < numThreads; i += 1) {
+            threads.push_back(
+                new Thread(&started, std::forward<Args>(args)...));
+        }
+    }
+
+    template<class... Args>
+    explicit ThreadPoolWrapper(Args&&... args) {
+        threads.reserve(std::thread::hardware_concurrency());
+        for (int i = 0; i < std::thread::hardware_concurrency(); i += 1) {
             threads.push_back(
                 new Thread(&started, std::forward<Args>(args)...));
         }

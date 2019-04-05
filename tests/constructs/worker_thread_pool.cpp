@@ -39,7 +39,7 @@ TEST_CASE(WorkerThreadPool, "WorkerThreadPool") {
     WorkerThreadPool* pool = nullptr;
 
     setUp([&] {
-        pool = new WorkerThreadPool(3);
+        pool = new WorkerThreadPool(3ul);
         pool->start();
     });
 

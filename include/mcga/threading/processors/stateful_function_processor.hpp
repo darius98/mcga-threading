@@ -10,7 +10,7 @@ class StatefulFunctionProcessor {
  public:
     using Object = void (*)(Args...);
 
-    explicit StatefulFunctionProcessor(Args&&... args):
+    explicit StatefulFunctionProcessor(Args... args):
             args(std::forward<Args>(args)...) {}
 
     void handleObject(const Object& obj) {
