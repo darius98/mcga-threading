@@ -1,4 +1,5 @@
 #pragma ide diagnostic ignored "readability-magic-numbers"
+#pragma ide diagnostic ignored "google-readability-braces-around-statements"
 
 #include <iostream>
 #include <string>
@@ -130,7 +131,7 @@ int main(int argc, char** argv) {
     StatefulWorkerThread<int&, vector<int>, const double&> statefulWorker(capture, capture2, capture3);
     StatefulWorkerThreadPool<int&, vector<int>, const double&> statefulWorkerPool(capture, capture2, capture3);
 
-    cout << "Simple, non-capturing function (" << numSamples << " samples):\n";
+    cout << "Non-capturing (" << numSamples << " samples):\n";
 #ifdef LINK_EVPP
     cout << "\tEVPP EventLoop:         " << sampleDuration(numSamples, task, evppEventLoop1, true_type{}) << "\n";
 #endif
@@ -149,7 +150,7 @@ int main(int argc, char** argv) {
 
     cout << "\n\n";
 
-    cout << "Simple, capture function (" << numSamples << " samples):\n";
+    cout << "Capturing (" << numSamples << " samples):\n";
 #ifdef LINK_EVPP
     cout << "\tEVPP EventLoop:         " << sampleDuration(numSamples, capturingLambda, evppEventLoop2) << "\n";
 #endif
