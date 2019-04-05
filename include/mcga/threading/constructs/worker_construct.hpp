@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atomic>
 #include <vector>
 
 #include <concurrentqueue.h>
@@ -61,7 +60,7 @@ class WorkerConstruct : private Exec {
     moodycamel::ConcurrentQueue<Object> queue;
     moodycamel::ConsumerToken queueConsumerToken{queue};
     std::vector<Object> queueBuffer;
-    std::atomic_size_t numBuffered = 0;
+    std::size_t numBuffered = 0;
 };
 
 }  // namespace mcga::threading::constructs

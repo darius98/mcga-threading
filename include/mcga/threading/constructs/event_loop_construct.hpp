@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atomic>
 #include <queue>
 #include <thread>
 #include <vector>
@@ -188,7 +187,7 @@ class EventLoopConstruct : private Exec {
     moodycamel::ConcurrentQueue<Object> immediateQueue;
     moodycamel::ConsumerToken immediateQueueToken{immediateQueue};
     std::vector<Object> immediateQueueBuffer;
-    std::atomic_size_t numImmediateDequeued = 0;
+    std::size_t numImmediateDequeued = 0;
 
     mutable std::mutex delayedQueueLock;
     std::priority_queue<DelayedInvocationPtr,
