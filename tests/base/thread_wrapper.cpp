@@ -7,7 +7,7 @@
 
 #include <mcga/threading.hpp>
 
-#include "rand_utils.hpp"
+#include "../rand_utils.hpp"
 
 using kktest::multiRunTest;
 using kktest::test;
@@ -15,7 +15,6 @@ using kktest::TestConfig;
 using kktest::matchers::expect;
 using kktest::matchers::isFalse;
 using kktest::matchers::isTrue;
-using mcga::threading::base::ThreadPoolWrapper;
 using mcga::threading::base::ThreadWrapper;
 using std::atomic_bool;
 using std::operator""ns;
@@ -42,9 +41,9 @@ struct BasicWorker {
 
 }  // namespace
 
-TEST_CASE(ThreadPoolWrapper, "ThreadPoolWrapper") {
-    test("Starting and stopping ThreadPoolWrapper", [&] {
-        auto loop = new ThreadPoolWrapper<ThreadWrapper<BasicWorker>>(8);
+TEST_CASE(ThreadWrapper, "ThreadWrapper") {
+    test("Starting and stopping thread wrapper", [&] {
+        auto loop = new ThreadWrapper<BasicWorker>();
         expect(loop->isRunning(), isFalse);
         loop->start();
         expect(loop->isRunning(), isTrue);
@@ -54,12 +53,12 @@ TEST_CASE(ThreadPoolWrapper, "ThreadPoolWrapper") {
     });
 
     multiRunTest(TestConfig("Concurrent starts and stops do not break the "
-                            "ThreadPoolWrapper")
+                            "ThreadWrapper")
                  .setTimeTicksLimit(10), 10, [&] {
         constexpr int numWorkers = 100;
-        constexpr int numOps = 100;
+        constexpr int numOps = 1000;
 
-        auto loop = new ThreadPoolWrapper<ThreadWrapper<BasicWorker>>(8);
+        auto loop = new ThreadWrapper<BasicWorker>();
 
         vector<thread*> workers(numWorkers, nullptr);
         for (int i = 0; i < numWorkers; ++ i) {

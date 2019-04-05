@@ -35,12 +35,12 @@ if (BuildTests)
     endfunction ()
 
     add_executable(mcga_threading_test
-        tests/event_loop.cpp
-        tests/event_loop_pool.cpp
-        tests/thread_pool_wrapper.cpp
-        tests/thread_wrapper.cpp
-        tests/worker.cpp
-        tests/worker_pool.cpp
+        tests/constructs/event_loop_thread.cpp
+        tests/constructs/event_loop_thread_pool.cpp
+        tests/base/thread_pool_wrapper.cpp
+        tests/base/thread_wrapper.cpp
+        tests/constructs/worker_thread.cpp
+        tests/constructs/worker_thread_pool.cpp
     )
     target_link_directories(mcga_threading_test PRIVATE /usr/local/lib)
     target_include_directories(mcga_threading_test PRIVATE /usr/local/include)

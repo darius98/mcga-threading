@@ -7,7 +7,7 @@
 
 #include <mcga/threading.hpp>
 
-#include "rand_utils.hpp"
+#include "../rand_utils.hpp"
 
 using kktest::setUp;
 using kktest::tearDown;
@@ -49,7 +49,7 @@ ostream& operator<<(ostream& os, const nanoseconds& ns) {
     return os;
 }
 
-TEST_CASE(EventLoop, "EventLoop") {
+TEST_CASE(EventLoopThread, "EventLoopThread") {
     EventLoopThread* loop = nullptr;
 
     setUp([&] {

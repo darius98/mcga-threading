@@ -9,7 +9,7 @@
 
 #include <mcga/threading.hpp>
 
-#include "rand_utils.hpp"
+#include "../rand_utils.hpp"
 
 using kktest::setUp;
 using kktest::tearDown;
