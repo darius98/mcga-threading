@@ -9,7 +9,8 @@
 
 #include <mcga/threading.hpp>
 
-#include "../rand_utils.hpp"
+#include "../testing_utils/basic_processor.hpp"
+#include "../testing_utils/rand_utils.hpp"
 
 using kktest::setUp;
 using kktest::tearDown;
@@ -18,16 +19,23 @@ using kktest::matchers::eachElement;
 using kktest::matchers::hasSize;
 using kktest::matchers::isEqualTo;
 using kktest::matchers::isNotEqualTo;
-using mcga::threading::EventLoopThreadPool;
+using mcga::threading::constructs::EventLoopConstruct;
+using mcga::threading::constructs::EventLoopThreadConstruct;
+using mcga::threading::constructs::EventLoopThreadPoolConstruct;
+using mcga::threading::testing::randomBool;
+using mcga::threading::testing::randomDelay;
+using mcga::threading::testing::BasicProcessor;
 using std::atomic_int;
 using std::hash;
-using std::lock_guard;
-using std::mutex;
 using std::operator""ms;
-using std::set;
 using std::thread;
 using std::vector;
 namespace this_thread = std::this_thread;
+
+using TestingProcessor = BasicProcessor<int>;
+using EventLoopThread
+        = EventLoopThreadConstruct<EventLoopConstruct<TestingProcessor>>;
+using EventLoopThreadPool = EventLoopThreadPoolConstruct<EventLoopThread>;
 
 TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
     EventLoopThreadPool* pool = nullptr;
@@ -38,6 +46,7 @@ TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
     });
 
     tearDown([&] {
+        TestingProcessor::reset();
         pool->stop();
         delete pool;
         pool = nullptr;
@@ -47,30 +56,19 @@ TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
                  "multiple threads, different from the main thread", 10, [&] {
         constexpr int numTasks = 100000;
 
-        mutex threadIdsMutex;
-        set<size_t> threadIds;
-        atomic_int numTasksExecuted = 0;
-
-        auto task = [&] {
-            numTasksExecuted += 1;
-
-            lock_guard guard(threadIdsMutex);
-            threadIds.insert(hash<thread::id>()(this_thread::get_id()));
-        };
-
         for (int i = 0; i < numTasks; ++ i) {
-            pool->enqueue(task);
-            pool->enqueueDelayed(task, 3ms);
+            pool->enqueue(1);
+            pool->enqueueDelayed(1, 3ms);
         }
 
-        while (numTasksExecuted != 2 * numTasks) {
+        while (TestingProcessor::numProcessed() != 2 * numTasks) {
             this_thread::sleep_for(1ms);
         }
         this_thread::sleep_for(100ms);
 
-        expect(numTasksExecuted, isEqualTo(2 * numTasks));
-        expect(threadIds, hasSize(3));
-        expect(threadIds, eachElement(isNotEqualTo(
+        expect(TestingProcessor::numProcessed(), isEqualTo(2 * numTasks));
+        expect(TestingProcessor::threadIds, hasSize(3));
+        expect(TestingProcessor::threadIds, eachElement(isNotEqualTo(
                 hash<thread::id>()(this_thread::get_id()))));
     });
 
@@ -78,27 +76,16 @@ TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
                  " are executed on multiple threads, different from the main "
                  "thread", 10, [&] {
         constexpr int numWorkers = 100;
-        constexpr int numJobsPerWorker = 1000;
-
-        mutex threadIdsMutex;
-        set<size_t> threadIds;
-        atomic_int numTasksExecuted = 0;
-
-        auto task = [&] {
-            numTasksExecuted += 1;
-
-            lock_guard guard(threadIdsMutex);
-            threadIds.insert(hash<thread::id>()(this_thread::get_id()));
-        };
+        constexpr int numWorkerJobs = 1000;
 
         vector<thread*> workers(numWorkers, nullptr);
         for (int i = 0; i < numWorkers; ++ i) {
             workers[i] = new thread([&] {
-                for (int j = 0; j < numJobsPerWorker; ++ j) {
+                for (int j = 0; j < numWorkerJobs; ++ j) {
                     if (randomBool()) {
-                        pool->enqueueDelayed(task, randomDelay());
+                        pool->enqueueDelayed(1, randomDelay());
                     } else {
-                        pool->enqueue(task);
+                        pool->enqueue(1);
                     }
                 }
             });
@@ -108,14 +95,15 @@ TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
             delete workers[i];
         }
 
-        while (numTasksExecuted != numWorkers * numJobsPerWorker) {
+        while (TestingProcessor::numProcessed() != numWorkers * numWorkerJobs) {
             this_thread::sleep_for(1ms);
         }
         this_thread::sleep_for(100ms);
 
-        expect(numTasksExecuted, isEqualTo(numWorkers * numJobsPerWorker));
-        expect(threadIds, hasSize(3));
-        expect(threadIds, eachElement(isNotEqualTo(
+        expect(TestingProcessor::numProcessed(),
+               isEqualTo(numWorkers * numWorkerJobs));
+        expect(TestingProcessor::threadIds, hasSize(3));
+        expect(TestingProcessor::threadIds, eachElement(isNotEqualTo(
                 hash<thread::id>()(this_thread::get_id()))));
     });
 }

@@ -7,7 +7,7 @@
 
 #include <mcga/threading.hpp>
 
-#include "../rand_utils.hpp"
+#include "../testing_utils/rand_utils.hpp"
 
 using kktest::multiRunTest;
 using kktest::test;
@@ -17,6 +17,7 @@ using kktest::matchers::isFalse;
 using kktest::matchers::isTrue;
 using mcga::threading::base::ThreadPoolWrapper;
 using mcga::threading::base::ThreadWrapper;
+using mcga::threading::testing::randomBool;
 using std::atomic_bool;
 using std::operator""ns;
 using std::size_t;

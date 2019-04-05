@@ -40,7 +40,7 @@ class EventLoopConstruct : private Exec {
         class MakeSharedEnabler : public DelayedInvocation {
          public:
             MakeSharedEnabler(Object obj, const Delay& delay, bool isRepeated)
-                    : DelayedInvocation(move(obj), delay, isRepeated) {}
+                    : DelayedInvocation(std::move(obj), delay, isRepeated) {}
         };
 
         struct Compare {
@@ -52,15 +52,17 @@ class EventLoopConstruct : private Exec {
         };
 
         static DelayedInvocationPtr delayed(Object obj, const Delay& delay) {
-            return std::make_shared<MakeSharedEnabler>(move(obj), delay, false);
+            return std::make_shared<MakeSharedEnabler>(
+                    std::move(obj), delay, false);
         }
 
         static DelayedInvocationPtr interval(Object obj, const Delay& delay) {
-            return std::make_shared<MakeSharedEnabler>(move(obj), delay, true);
+            return std::make_shared<MakeSharedEnabler>(
+                    std::move(obj), delay, true);
         }
 
         DelayedInvocation(Object obj, const Delay& delay, bool isRepeated):
-                obj(move(obj)), delay(delay), isRepeated(isRepeated) {
+                obj(std::move(obj)), delay(delay), isRepeated(isRepeated) {
             setTimePoint();
         }
 

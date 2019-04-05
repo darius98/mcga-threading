@@ -1,25 +1,32 @@
 #pragma ide diagnostic ignored "readability-magic-numbers"
 
-#include <set>
+#include <algorithm>
 
 #include <kktest.hpp>
 #include <kktest_ext/matchers.hpp>
 
-#include <mcga/threading.hpp>
+#include <mcga/threading/constructs/event_loop_construct.hpp>
+#include <mcga/threading/constructs/event_loop_thread_construct.hpp>
 
-#include "../rand_utils.hpp"
+#include "../testing_utils/basic_processor.hpp"
+#include "../testing_utils/rand_utils.hpp"
 
 using kktest::setUp;
 using kktest::tearDown;
 using kktest::test;
 using kktest::TestConfig;
+using kktest::matchers::anyElement;
 using kktest::matchers::hasSize;
 using kktest::matchers::isZero;
 using kktest::matchers::isEqualTo;
 using kktest::matchers::isNotEqualTo;
 using kktest::matchers::isGreaterThanEqual;
+using kktest::matchers::eachElement;
 using kktest::matchers::expect;
-using mcga::threading::EventLoopThread;
+using mcga::threading::constructs::EventLoopConstruct;
+using mcga::threading::constructs::EventLoopThreadConstruct;
+using mcga::threading::testing::BasicProcessor;
+using mcga::threading::testing::randomDelay;
 using std::chrono::duration_cast;
 using std::chrono::microseconds;
 using std::chrono::milliseconds;
@@ -27,12 +34,15 @@ using std::chrono::nanoseconds;
 using std::chrono::steady_clock;
 using std::hash;
 using std::ostream;
-using std::set;
+using std::sort;
 using std::thread;
 using std::vector;
 using std::operator""ms;
-using std::operator""us;
 namespace this_thread = std::this_thread;
+
+using TestingProcessor = BasicProcessor<int>;
+using EventLoopThread
+        = EventLoopThreadConstruct<EventLoopConstruct<TestingProcessor>>;
 
 ostream& operator<<(ostream& os, const milliseconds& ms) {
     os << ms.count() << "ms";
@@ -50,6 +60,8 @@ ostream& operator<<(ostream& os, const nanoseconds& ns) {
 }
 
 TEST_CASE(EventLoopThread, "EventLoopThread") {
+    constexpr int task = 1;
+
     EventLoopThread* loop = nullptr;
 
     setUp([&] {
@@ -61,19 +73,12 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
         loop->stop();
         delete loop;
         loop = nullptr;
+        TestingProcessor::reset();
     });
 
     test("All tasks enqueued in an EventLoopThread are executed on the "
          "same thread, different from the main thread", [&] {
         constexpr int numTasks = 10000;
-
-        set<size_t> threadIds;
-        int numTasksExecuted = 0;
-
-        auto task = [&] {
-            numTasksExecuted += 1;
-            threadIds.insert(hash<thread::id>()(this_thread::get_id()));
-        };
 
         for (int i = 0; i < numTasks; ++ i) {
             loop->enqueue(task);
@@ -85,44 +90,48 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
         }
         this_thread::sleep_for(10ms);
 
-        expect(numTasksExecuted, isEqualTo(2 * numTasks));
-        expect(threadIds, hasSize(1));
-        expect(*threadIds.begin(),
+        expect(TestingProcessor::numProcessed(), isEqualTo(2 * numTasks));
+        expect(TestingProcessor::objects, eachElement(isEqualTo(task)));
+        expect(TestingProcessor::threadIds, hasSize(1));
+        expect(*TestingProcessor::threadIds.begin(),
                isNotEqualTo(hash<thread::id>()(this_thread::get_id())));
     });
 
     test("Enqueueing an executable executes it", [&] {
-        int x = 0;
-        loop->enqueue([&]{ x += 1; });
-        while (loop->sizeApprox() > 0) {
+        loop->enqueue(task);
+        while (TestingProcessor::numProcessed() == 0) {
             this_thread::sleep_for(1ms);
         }
         this_thread::sleep_for(10ms);
-        expect(x, isEqualTo(1));
+        expect(TestingProcessor::numProcessed(), isEqualTo(1));
+        expect(TestingProcessor::objects[0], isEqualTo(task));
     });
 
     test("Enqueueing an executable delayed executes it", [&] {
-        int x = 0;
-        loop->enqueueDelayed([&]{ x += 1; }, 1ms);
-        while (loop->sizeApprox() > 0) {
+        loop->enqueueDelayed(task, 1ms);
+        while (TestingProcessor::numProcessed() == 0) {
             this_thread::sleep_for(1ms);
         }
         this_thread::sleep_for(10ms);
-        expect(x, isEqualTo(1));
+        expect(TestingProcessor::numProcessed(), isEqualTo(1));
+        expect(TestingProcessor::objects[0], isEqualTo(task));
     });
 
     test("Enqueueing an executable interval executes it multiple times", [&] {
         vector<nanoseconds> executionDelays;
         steady_clock::time_point startTime = steady_clock::now();
-        loop->enqueueInterval([&]{
+        loop->enqueueInterval(task, 10ms);
+        TestingProcessor::afterHandle = [&] {
             executionDelays.push_back(
                 duration_cast<nanoseconds>(steady_clock::now() - startTime));
-        }, 10ms);
+        };
 
         while (executionDelays.size() < 10) {
             this_thread::sleep_for(5ms);
         }
         expect(executionDelays, hasSize(10));
+        expect(TestingProcessor::numProcessed(), isEqualTo(10));
+        expect(TestingProcessor::objects, eachElement(isEqualTo(task)));
         for (size_t i = 1; i < executionDelays.size(); ++ i) {
             expect(executionDelays[i] - executionDelays[i - 1],
                    isGreaterThanEqual(10ms));
@@ -130,98 +139,83 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
     });
 
     test("Delayed executions are executed in the expected order", [&] {
-        vector<int> values;
-        loop->enqueueDelayed([&] { values.push_back(1); }, 100ms);
-        loop->enqueueDelayed([&] { values.push_back(2); }, 500ms);
-        loop->enqueueDelayed([&] { values.push_back(3); }, 400ms);
-        loop->enqueueDelayed([&] { values.push_back(4); }, 200ms);
-        loop->enqueueDelayed([&] { values.push_back(5); }, 300ms);
+        loop->enqueueDelayed(1, 100ms);
+        loop->enqueueDelayed(2, 500ms);
+        loop->enqueueDelayed(3, 400ms);
+        loop->enqueueDelayed(4, 200ms);
+        loop->enqueueDelayed(5, 300ms);
 
-        while (values.size() < 5) {
+        while (TestingProcessor::objects.size() < 5) {
             this_thread::sleep_for(5ms);
         }
         this_thread::sleep_for(100ms);
-        expect(values, isEqualTo(vector<int>{1, 4, 5, 3, 2}));
+        expect(TestingProcessor::objects,
+               isEqualTo(vector<int>{1, 4, 5, 3, 2}));
     });
 
     test("Cancelling a delayed invocation", [&] {
-        int x = 0;
-
-        auto invocation = loop->enqueueDelayed([&] { x += 1; }, 1000us);
+        auto invocation = loop->enqueueDelayed(task, 1ms);
 
         invocation->cancel();
 
-        this_thread::sleep_for(10000us);
-        expect(x, isZero);
+        this_thread::sleep_for(10ms);
+        expect(TestingProcessor::numProcessed(), isZero);
     });
 
     test("Cancelling an interval", [&] {
-        int x = 0;
+        auto invocation = loop->enqueueInterval(task, 50ms);
 
-        auto invocation = loop->enqueueInterval([&] { x += 1; }, 50ms);
-
-        while (x < 3) {
+        while (TestingProcessor::numProcessed() < 3) {
             this_thread::sleep_for(1ms);
         }
 
         invocation->cancel();
 
         this_thread::sleep_for(200ms);
-        expect(x, isEqualTo(3));
+        expect(TestingProcessor::numProcessed(), isEqualTo(3));
     });
 
     test("Cancelling an interval within the interval", [&] {
-        int x = 0;
-
-        EventLoopThread::DelayedInvocationPtr invocation
-                = loop->enqueueInterval([&] {
-            x += 1;
+        auto invocation = loop->enqueueInterval(task, 10ms);
+        TestingProcessor::afterHandle = [&] {
             invocation->cancel();
-        }, 10ms);
+        };
 
-        while (x < 1) {
+        while (TestingProcessor::numProcessed() < 1) {
             this_thread::sleep_for(1ms);
         }
         this_thread::sleep_for(100ms);
-        expect(x, isEqualTo(1));
+        expect(TestingProcessor::numProcessed(), isEqualTo(1));
     });
 
     test("A delayed invocation will still execute even if immediate "
          "invocations keep getting added to the queue", [&] {
-        int x = 0;
-        int y = 0;
+        auto limit = steady_clock::now() + 100ms;
 
-        auto limit = steady_clock::now() + 7ms;
-        EventLoopThread::Object func = [&x, &loop, &func, limit] {
-            x += 1;
+        loop->enqueue(1);
+        TestingProcessor::afterHandle = [&] {
             if (steady_clock::now() <= limit) {
-                loop->enqueue(func);
+                loop->enqueue(1);
             }
         };
-        loop->enqueue(func);
+        loop->enqueueDelayed(2, 5ms);
 
-        loop->enqueueDelayed([&] { y = 1; }, 5ms);
+        this_thread::sleep_for(500ms);
 
-        while (y == 0) {
-            this_thread::sleep_for(1ms);
-        }
-
-        expect(y, isEqualTo(1));
+        expect(TestingProcessor::objects, anyElement(isEqualTo(2)));
     });
 
     multiRunTest(TestConfig("Enqueueing delayed executables from different "
                             "threads")
                  .setTimeTicksLimit(10), 10, [&] {
         constexpr int numWorkers = 100;
-        constexpr int numJobsPerWorker = 1000;
-
-        int x = 0;
+        constexpr int numWorkerJobs = 1000;
 
         vector<thread*> workers(numWorkers, nullptr);
         for (int i = 0; i < numWorkers; ++ i) {
-            workers[i] = new thread([&] {
-                for (int j = 0; j < numJobsPerWorker; ++ j) {
-                    loop->enqueueDelayed([&] { x += 1; }, randomDelay());
+            workers[i] = new thread([&loop, i] {
+                for (int j = 0; j < numWorkerJobs; ++ j) {
+                    loop->enqueueDelayed(i * numWorkerJobs + j, randomDelay());
                 }
             });
         }
@@ -229,10 +223,17 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
             workers[i]->join();
             delete workers[i];
         }
-        while (x < numWorkers * numJobsPerWorker) {
+        while (TestingProcessor::numProcessed() < numWorkers * numWorkerJobs) {
             this_thread::sleep_for(1ms);
         }
-        expect(x, isEqualTo(numWorkers * numJobsPerWorker));
+        this_thread::sleep_for(50ms);
+        expect(TestingProcessor::numProcessed(),
+               isEqualTo(numWorkers * numWorkerJobs));
+        sort(TestingProcessor::objects.begin(),
+             TestingProcessor::objects.end());
+        for (int i = 0; i < numWorkers * numWorkerJobs; ++ i) {
+            expect(TestingProcessor::objects[i], isEqualTo(i));
+        }
     });
 
     test(TestConfig("A delayed invocation is never executed before "
@@ -243,9 +244,10 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
             nanoseconds expected = 3ms;
             auto startTime = steady_clock::now();
             nanoseconds actual(0);
-            loop->enqueueDelayed([startTime, &actual] {
+            loop->enqueueDelayed(task, 3ms);
+            TestingProcessor::afterHandle = [&] {
                 actual = steady_clock::now() - startTime;
-            }, 3ms);
+            };
 
             while (actual.count() == 0) {
                 this_thread::sleep_for(1ms);
