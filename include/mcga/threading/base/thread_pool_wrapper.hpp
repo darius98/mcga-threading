@@ -24,16 +24,7 @@ class ThreadPoolWrapper {
     MCGA_THREADING_DISALLOW_COPY_AND_MOVE(ThreadPoolWrapper);
 
     ~ThreadPoolWrapper() {
-        // This time, spin until we can actually stop this, and then join the
-        // worker thread.
-        while (isInStartOrStop.test_and_set()) {
-        }
-        if (started.load()) {
-            started.store(false);
-            for (Thread* thread: threads) {
-                thread->stop();
-            }
-        }
+        stopRaw();
     }
 
     std::size_t sizeApprox() const {
@@ -49,10 +40,8 @@ class ThreadPoolWrapper {
     }
 
     void start() {
-        if (isInStartOrStop.test_and_set()) {
-            // Ensure that only one thread's call to start()/stop() actually
-            // does anything. This flag is cleared at the end of the method.
-            return;
+        while (isInStartOrStop.test_and_set()) {
+            std::this_thread::yield();
         }
         if (!started.load()) {
             started.store(true);
@@ -64,10 +53,18 @@ class ThreadPoolWrapper {
     }
 
     void stop() {
-        if (isInStartOrStop.test_and_set()) {
-            // Ensure that only one thread's call to start()/stop() actually
-            // does anything. This flag is cleared at the end of the method.
-            return;
+        stopRaw();
+        isInStartOrStop.clear();
+    }
+ protected:
+    Thread* nextThread() {
+        return threads[currentThreadId.fetch_add(1) % threads.size()];
+    }
+
+ private:
+    void stopRaw() {
+        while (isInStartOrStop.test_and_set()) {
+            std::this_thread::yield();
         }
         if (started.load()) {
             started.store(false);
@@ -75,17 +72,9 @@ class ThreadPoolWrapper {
                 thread->stop();
             }
         }
-        isInStartOrStop.clear();
     }
 
- protected:
     std::atomic_size_t currentThreadId = 0;
-
-    Thread* nextThread() {
-        return threads[currentThreadId.fetch_add(1) % threads.size()];
-    }
-
- private:
     std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
     volatile std::atomic_bool started = false;
     std::vector<Thread*> threads;

@@ -25,10 +25,6 @@ class ThreadWrapper {
     MCGA_THREADING_DISALLOW_COPY_AND_MOVE(ThreadWrapper);
 
     ~ThreadWrapper() {
-        // This time, spin until we can actually stop this, and then join the
-        // worker thread.
-        while (isInStartOrStop.test_and_set()) {
-        }
         stopRaw();
         if (ownStartedFlag) {
             delete started;
@@ -44,10 +40,8 @@ class ThreadWrapper {
     }
 
     void start() {
-        if (isInStartOrStop.test_and_set()) {
-            // Ensure that only one thread's call to start()/stop() actually
-            // does anything. This flag is cleared at the end of the method.
-            return;
+        while (isInStartOrStop.test_and_set()) {
+            std::this_thread::yield();
         }
         if (ownStartedFlag) {
             if (!started->load()) {
@@ -73,17 +67,15 @@ class ThreadWrapper {
     }
 
     void stop() {
-        if (isInStartOrStop.test_and_set()) {
-            // Ensure that only one thread's call to start()/stop() actually
-            // does anything. This flag is cleared at the end of the method.
-            return;
-        }
         stopRaw();
         isInStartOrStop.clear();
     }
 
  private:
     void stopRaw() {
+        while (isInStartOrStop.test_and_set()) {
+            std::this_thread::yield();
+        }
         if (ownStartedFlag) {
             started->store(false);
         }

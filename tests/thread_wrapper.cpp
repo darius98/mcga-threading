@@ -11,6 +11,7 @@
 
 using kktest::multiRunTest;
 using kktest::test;
+using kktest::TestConfig;
 using kktest::matchers::expect;
 using kktest::matchers::isFalse;
 using kktest::matchers::isTrue;
@@ -51,11 +52,11 @@ TEST_CASE(ThreadWrapper, "ThreadWrapper") {
         delete loop;
     });
 
-    multiRunTest("Concurrent starts and stops do not break the ThreadWrapper",
-                 10,
-                 [&] {
+    multiRunTest(TestConfig("Concurrent starts and stops do not break the "
+                            "ThreadWrapper")
+                 .setTimeTicksLimit(10), 10, [&] {
         constexpr int numWorkers = 100;
-        constexpr int numOps = 10000;
+        constexpr int numOps = 1000;
 
         auto loop = new ThreadWrapper<BasicWorker>();
 
