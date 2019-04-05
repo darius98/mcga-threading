@@ -1,74 +1,17 @@
+#pragma ide diagnostic ignored "readability-magic-numbers"
+
 #include <algorithm>
-#include <chrono>
-#include <iomanip>
 #include <iostream>
-#include <vector>
 
 #include <mcga/threading.hpp>
 
-using namespace mcga::threading;
-using namespace std;
-using namespace std::chrono;
+#include "benchmark_utils.hpp"
 
-class DurationTracker {
- public:
-    vector<nanoseconds> samples;
-
-    void addSample(const nanoseconds& ns) {
-        samples.push_back(ns);
-    }
-
-    void organize() {
-        sort(samples.begin(), samples.end());
-    }
-
-    nanoseconds min() const {
-        return samples.front();
-    }
-
-    nanoseconds max() const {
-        return samples.back();
-    }
-
-    nanoseconds percent(double p) const {
-        auto index = static_cast<size_t>(p * 0.01 * samples.size());
-        if (index >= samples.size() - 1) {
-            return max();
-        }
-        if (index < 1) {
-            return min();
-        }
-        return samples[index + 1];
-    }
-};
-
-class Stopwatch {
- public:
-    Stopwatch(): startTime(steady_clock::now()) {}
-
-    nanoseconds get() const {
-        return duration_cast<nanoseconds>(steady_clock::now() - startTime);
-    }
-
-    void track(DurationTracker* tracker, nanoseconds expected) const {
-        tracker->addSample(get() - expected);
-    }
- private:
-    steady_clock::time_point startTime;
-};
-
-ostream& operator<<(ostream& os, const chrono::nanoseconds& ns) {
-    if (ns.count() > 1000000000) {
-        os << fixed << setprecision(3) << ns.count() * 1.e-9 << "s";
-    } else if (ns.count() > 1000000) {
-        os << fixed << setprecision(3) << ns.count() * 1.e-6 << "ms";
-    } else if (ns.count() > 1000) {
-        os << fixed << setprecision(3) << ns.count() * 1.e-3 << "us";
-    } else {
-        os << ns.count() << "ns";
-    }
-    return os;
-}
+using mcga::threading::EventLoopThread;
+using std::cout;
+using std::operator""ms;
+using std::stoi;
+using std::this_thread::yield;
 
 int main(int argc, char** argv) {
     constexpr int kNumSamplesDefault = 10000;
@@ -90,7 +33,7 @@ int main(int argc, char** argv) {
             done = true;
         }, 3ms);
         while (!done) {
-            this_thread::yield();
+            yield();
         }
     }
 
