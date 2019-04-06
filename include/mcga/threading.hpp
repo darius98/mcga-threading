@@ -15,44 +15,34 @@
 #include <mcga/threading/processors/stateless_function_processor.hpp>
 
 #define MCGA_THREADING_DEFINE_CONSTRUCTS(PROCESSOR, PREFIX)                    \
-    using PREFIX##Worker                                                       \
-        = constructs::WorkerConstruct<PROCESSOR>;                              \
-                                                                               \
     using PREFIX##WorkerThread                                                 \
-        = constructs::WorkerThreadConstruct<PREFIX##Worker>;                   \
+        = constructs::WorkerThreadConstruct                                    \
+                <constructs::WorkerConstruct<PROCESSOR>>;                      \
                                                                                \
     using PREFIX##WorkerThreadPool                                             \
         = constructs::WorkerThreadPoolConstruct<PREFIX##WorkerThread>;         \
                                                                                \
-    using PREFIX##EventLoop                                                    \
-        = constructs::EventLoopConstruct<PROCESSOR>;                           \
-                                                                               \
     using PREFIX##EventLoopThread                                              \
-        = constructs::EventLoopThreadConstruct<PREFIX##EventLoop>;             \
+        = constructs::EventLoopThreadConstruct                                 \
+                <constructs::EventLoopConstruct<PROCESSOR>>;                   \
                                                                                \
     using PREFIX##EventLoopThreadPool                                          \
         = constructs::EventLoopThreadPoolConstruct<PREFIX##EventLoopThread>
 
 #define MCGA_THREADING_DEFINE_TEMPLATE_CONSTRUCTS(PROCESSOR, PREFIX)           \
     template<class... T>                                                       \
-    using PREFIX##Worker                                                       \
-            = constructs::WorkerConstruct<PROCESSOR<T...>>;                    \
-                                                                               \
-    template<class... T>                                                       \
     using PREFIX##WorkerThread                                                 \
-        = constructs::WorkerThreadConstruct<PREFIX##Worker<T...>>;             \
+        = constructs::WorkerThreadConstruct                                    \
+                <constructs::WorkerConstruct<PROCESSOR<T...>>>;                \
                                                                                \
     template<class... T>                                                       \
     using PREFIX##WorkerThreadPool                                             \
         = constructs::WorkerThreadPoolConstruct<PREFIX##WorkerThread<T...>>;   \
                                                                                \
     template<class... T>                                                       \
-    using PREFIX##EventLoop                                                    \
-        = constructs::EventLoopConstruct<PROCESSOR<T...>>;                     \
-                                                                               \
-    template<class... T>                                                       \
     using PREFIX##EventLoopThread                                              \
-        = constructs::EventLoopThreadConstruct<PREFIX##EventLoop<T...>>;       \
+        = constructs::EventLoopThreadConstruct                                 \
+                <constructs::EventLoopConstruct<PROCESSOR<T...>>>;             \
                                                                                \
     template<class... T>                                                       \
     using PREFIX##EventLoopThreadPool                                          \

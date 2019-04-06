@@ -4,10 +4,10 @@ namespace mcga::threading::processors {
 
 class StatelessFunctionProcessor {
  public:
-    using Object = void (*)();
+    using Task = void (*)();
 
-    static void handleObject(const Object& obj) {
-        obj();
+    static void executeTask(const Task& task) {
+        task();
     }
 };
 

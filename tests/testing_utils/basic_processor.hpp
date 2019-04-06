@@ -7,11 +7,11 @@ namespace mcga::threading::testing {
 
 template<class T>
 struct BasicProcessor {
-    using Object = T;
+    using Task = T;
 
     static inline std::mutex processMutex;
     static inline std::set<std::size_t> threadIds{};
-    static inline std::vector<Object> objects{};
+    static inline std::vector<Task> objects{};
 
     static inline std::function<void()> afterHandle;
 
@@ -25,10 +25,10 @@ struct BasicProcessor {
         afterHandle = nullptr;
     }
 
-    static void handleObject(const Object& obj) {
+    static void executeTask(const Task& task) {
         std::lock_guard lock(processMutex);
 
-        objects.push_back(obj);
+        objects.push_back(task);
         threadIds.insert(
                 std::hash<std::thread::id>()(std::this_thread::get_id()));
         if (afterHandle) {

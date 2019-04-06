@@ -9,12 +9,12 @@
 
 namespace mcga::threading::constructs {
 
-template<class Exec>
-class WorkerConstruct : private Exec {
+template<class Processor>
+class WorkerConstruct : private Processor {
  public:
-    using Object = typename Exec::Object;
+    using Task = typename Processor::Task;
 
-    using Exec::Exec;
+    using Processor::Processor;
 
     MCGA_THREADING_DISALLOW_COPY_AND_MOVE(WorkerConstruct);
 
@@ -31,11 +31,11 @@ class WorkerConstruct : private Exec {
         }
     }
 
-    void enqueue(const Object& obj) {
-        queue.enqueue(obj);
+    void enqueue(const Task& task) {
+        queue.enqueue(task);
     }
 
-    void enqueue(Object&& obj) {
+    void enqueue(Task&& obj) {
         queue.enqueue(std::move(obj));
     }
 
@@ -53,13 +53,13 @@ class WorkerConstruct : private Exec {
             queueBuffer.begin(),
             queueBuffer.size());
         for (size_t i = 0; numBuffered > 0; --numBuffered, ++ i) {
-            this->handleObject(queueBuffer[i]);
+            this->executeTask(queueBuffer[i]);
         }
     }
 
-    moodycamel::ConcurrentQueue<Object> queue;
+    moodycamel::ConcurrentQueue<Task> queue;
     moodycamel::ConsumerToken queueConsumerToken{queue};
-    std::vector<Object> queueBuffer;
+    std::vector<Task> queueBuffer;
     std::size_t numBuffered = 0;
 };
 

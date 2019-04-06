@@ -7,7 +7,7 @@ namespace mcga::threading::constructs {
 template<class W>
 class WorkerThreadPoolConstruct : public base::ThreadPoolWrapper<W> {
  public:
-    using Object = typename W::Object;
+    using Task = typename W::Task;
 
     using base::ThreadPoolWrapper<W>::ThreadPoolWrapper;
 
@@ -15,12 +15,12 @@ class WorkerThreadPoolConstruct : public base::ThreadPoolWrapper<W> {
 
     ~WorkerThreadPoolConstruct() = default;
 
-    void enqueue(const Object& func) {
-        this->nextThread()->enqueue(func);
+    void enqueue(const Task& task) {
+        this->nextThread()->enqueue(task);
     }
 
-    void enqueue(Object&& func) {
-        this->nextThread()->enqueue(std::move(func));
+    void enqueue(Task&& task) {
+        this->nextThread()->enqueue(std::move(task));
     }
 };
 

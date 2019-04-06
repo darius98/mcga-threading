@@ -7,9 +7,9 @@ namespace mcga::threading::constructs {
 template<class W>
 class EventLoopThreadPoolConstruct : public base::ThreadPoolWrapper<W> {
  public:
-    using Object = typename W::Object;
-    using DelayedInvocation = typename W::DelayedInvocation;
-    using DelayedInvocationPtr = typename W::DelayedInvocationPtr;
+    using Task = typename W::Task;
+    using DelayedTask = typename W::DelayedTask;
+    using DelayedTaskPtr = typename W::DelayedTaskPtr;
 
     using base::ThreadPoolWrapper<W>::ThreadPoolWrapper;
 
@@ -17,40 +17,36 @@ class EventLoopThreadPoolConstruct : public base::ThreadPoolWrapper<W> {
 
     ~EventLoopThreadPoolConstruct() = default;
 
-    void enqueue(const Object& func) {
-        this->nextThread()->enqueue(func);
+    void enqueue(const Task& task) {
+        this->nextThread()->enqueue(task);
     }
 
-    void enqueue(Object&& func) {
-        this->nextThread()->enqueue(std::move(func));
+    void enqueue(Task&& task) {
+        this->nextThread()->enqueue(std::move(task));
     }
 
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueDelayed(
-            const Object& obj,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return this->nextThread()->enqueueDelayed(obj, delay);
+    template<class Rep, class Ratio>
+    DelayedTaskPtr enqueueDelayed(
+            const Task& task, const std::chrono::duration<Rep, Ratio>& delay) {
+        return this->nextThread()->enqueueDelayed(task, delay);
     }
 
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueDelayed(
-            Object&& obj,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return this->nextThread()->enqueueDelayed(std::move(obj), delay);
+    template<class Rep, class Ratio>
+    DelayedTaskPtr enqueueDelayed(
+            Task&& task, const std::chrono::duration<Rep, Ratio>& delay) {
+        return this->nextThread()->enqueueDelayed(std::move(task), delay);
     }
 
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueInterval(
-            const Object& obj,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return this->nextThread()->enqueueInterval(obj, delay);
+    template<class Rep, class Ratio>
+    DelayedTaskPtr enqueueInterval(
+            const Task& task, const std::chrono::duration<Rep, Ratio>& delay) {
+        return this->nextThread()->enqueueInterval(task, delay);
     }
 
-    template<class _Rep, class _Ratio>
-    DelayedInvocationPtr enqueueInterval(
-            Object&& obj,
-            const std::chrono::duration<_Rep, _Ratio>& delay) {
-        return this->nextThread()->enqueueInterval(std::move(obj), delay);
+    template<class Rep, class Ratio>
+    DelayedTaskPtr enqueueInterval(
+            Task&& task, const std::chrono::duration<Rep, Ratio>& delay) {
+        return this->nextThread()->enqueueInterval(std::move(task), delay);
     }
 };
 
