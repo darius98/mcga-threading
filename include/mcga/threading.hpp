@@ -1,10 +1,11 @@
 #pragma once
 
+#include <mcga/threading/base/event_loop.hpp>
+#include <mcga/threading/base/worker.hpp>
+
 // Constructs
-#include <mcga/threading/constructs/event_loop_construct.hpp>
 #include <mcga/threading/constructs/event_loop_thread_construct.hpp>
 #include <mcga/threading/constructs/event_loop_thread_pool_construct.hpp>
-#include <mcga/threading/constructs/worker_construct.hpp>
 #include <mcga/threading/constructs/worker_thread_pool_construct.hpp>
 #include <mcga/threading/constructs/worker_thread_construct.hpp>
 
@@ -16,37 +17,40 @@
 
 #define MCGA_THREADING_DEFINE_CONSTRUCTS(PROCESSOR, PREFIX)                    \
     using PREFIX##WorkerThread                                                 \
-        = constructs::WorkerThreadConstruct                                    \
-                <constructs::WorkerConstruct<PROCESSOR>>;                      \
+        = mcga::threading::constructs::WorkerThreadConstruct                   \
+                <mcga::threading::base::Worker<PROCESSOR>>;                    \
                                                                                \
     using PREFIX##WorkerThreadPool                                             \
-        = constructs::WorkerThreadPoolConstruct<PREFIX##WorkerThread>;         \
+        = mcga::threading::constructs::WorkerThreadPoolConstruct               \
+                <PREFIX##WorkerThread>;                                        \
                                                                                \
     using PREFIX##EventLoopThread                                              \
-        = constructs::EventLoopThreadConstruct                                 \
-                <constructs::EventLoopConstruct<PROCESSOR>>;                   \
+        = mcga::threading::constructs::EventLoopThreadConstruct                \
+                <mcga::threading::base::EventLoop<PROCESSOR>>;                 \
                                                                                \
     using PREFIX##EventLoopThreadPool                                          \
-        = constructs::EventLoopThreadPoolConstruct<PREFIX##EventLoopThread>
+        = mcga::threading::constructs::EventLoopThreadPoolConstruct            \
+                <PREFIX##EventLoopThread>
 
 #define MCGA_THREADING_DEFINE_TEMPLATE_CONSTRUCTS(PROCESSOR, PREFIX)           \
     template<class... T>                                                       \
     using PREFIX##WorkerThread                                                 \
-        = constructs::WorkerThreadConstruct                                    \
-                <constructs::WorkerConstruct<PROCESSOR<T...>>>;                \
+        = mcga::threading::constructs::WorkerThreadConstruct                   \
+                <mcga::threading::base::Worker<PROCESSOR<T...>>>;              \
                                                                                \
     template<class... T>                                                       \
     using PREFIX##WorkerThreadPool                                             \
-        = constructs::WorkerThreadPoolConstruct<PREFIX##WorkerThread<T...>>;   \
+        = mcga::threading::constructs::WorkerThreadPoolConstruct               \
+                <PREFIX##WorkerThread<T...>>;                                  \
                                                                                \
     template<class... T>                                                       \
     using PREFIX##EventLoopThread                                              \
-        = constructs::EventLoopThreadConstruct                                 \
-                <constructs::EventLoopConstruct<PROCESSOR<T...>>>;             \
+        = mcga::threading::constructs::EventLoopThreadConstruct                \
+                <mcga::threading::base::EventLoop<PROCESSOR<T...>>>;           \
                                                                                \
     template<class... T>                                                       \
     using PREFIX##EventLoopThreadPool                                          \
-        = constructs::EventLoopThreadPoolConstruct                             \
+        = mcga::threading::constructs::EventLoopThreadPoolConstruct            \
                 <PREFIX##EventLoopThread<T...>>
 
 namespace mcga::threading {

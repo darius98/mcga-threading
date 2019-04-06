@@ -17,7 +17,6 @@
 
 using mcga::threading::EventLoopThread;
 using mcga::threading::EventLoopThreadPool;
-using mcga::threading::StatefulEventLoop;
 using mcga::threading::StatefulEventLoopThread;
 using mcga::threading::StatefulEventLoopThreadPool;
 using mcga::threading::StatefulWorkerThread;

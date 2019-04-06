@@ -7,7 +7,7 @@
 #include <kktest.hpp>
 #include <kktest_ext/matchers.hpp>
 
-#include <mcga/threading/constructs/worker_construct.hpp>
+#include <mcga/threading/base/worker.hpp>
 #include <mcga/threading/constructs/worker_thread_construct.hpp>
 #include <mcga/threading/constructs/worker_thread_pool_construct.hpp>
 

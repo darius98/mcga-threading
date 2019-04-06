@@ -5,7 +5,7 @@
 #include <kktest.hpp>
 #include <kktest_ext/matchers.hpp>
 
-#include <mcga/threading/constructs/event_loop_construct.hpp>
+#include <mcga/threading/base/event_loop.hpp>
 #include <mcga/threading/constructs/event_loop_thread_construct.hpp>
 
 #include "../testing_utils/basic_processor.hpp"
