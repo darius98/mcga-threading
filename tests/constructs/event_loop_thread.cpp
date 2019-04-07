@@ -23,7 +23,7 @@ using kktest::matchers::isNotEqualTo;
 using kktest::matchers::isGreaterThanEqual;
 using kktest::matchers::eachElement;
 using kktest::matchers::expect;
-using mcga::threading::constructs::EventLoopConstruct;
+using mcga::threading::base::EventLoop;
 using mcga::threading::constructs::EventLoopThreadConstruct;
 using mcga::threading::testing::BasicProcessor;
 using mcga::threading::testing::randomDelay;
@@ -41,8 +41,7 @@ using std::operator""ms;
 namespace this_thread = std::this_thread;
 
 using TestingProcessor = BasicProcessor<int>;
-using EventLoopThread
-        = EventLoopThreadConstruct<EventLoopConstruct<TestingProcessor>>;
+using EventLoopThread = EventLoopThreadConstruct<EventLoop<TestingProcessor>>;
 
 ostream& operator<<(ostream& os, const milliseconds& ms) {
     os << ms.count() << "ms";

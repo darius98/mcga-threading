@@ -29,7 +29,7 @@ class ImmediateQueueWrapper {
                     queueBuffer.begin(),
                     queueBuffer.size());
             for (size_t i = 0; queueBufferSize > 0; --queueBufferSize, ++ i) {
-                processor->executeTask(queueBuffer[i]);
+                processor->executeTask(std::move(queueBuffer[i]));
             }
         }
     }

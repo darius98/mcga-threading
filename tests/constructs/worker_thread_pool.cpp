@@ -20,7 +20,7 @@ using kktest::matchers::eachElement;
 using kktest::matchers::hasSize;
 using kktest::matchers::isEqualTo;
 using kktest::matchers::isNotEqualTo;
-using mcga::threading::constructs::WorkerConstruct;
+using mcga::threading::base::Worker;
 using mcga::threading::constructs::WorkerThreadConstruct;
 using mcga::threading::constructs::WorkerThreadPoolConstruct;
 using mcga::threading::testing::BasicProcessor;
@@ -32,7 +32,7 @@ using std::vector;
 namespace this_thread = std::this_thread;
 
 using TestingProcessor = BasicProcessor<int>;
-using WorkerThread = WorkerThreadConstruct<WorkerConstruct<TestingProcessor>>;
+using WorkerThread = WorkerThreadConstruct<Worker<TestingProcessor>>;
 using WorkerThreadPool = WorkerThreadPoolConstruct<WorkerThread>;
 
 TEST_CASE(WorkerThreadPool, "WorkerThreadPool") {
