@@ -13,11 +13,10 @@
 
 namespace mcga::threading::base {
 
-template<class Processor>
-class EventLoop:
-    private Processor,
-    public base::DelayedQueueWrapper<Processor, typename Processor::Task>,
-    public base::ImmediateQueueWrapper<Processor, typename Processor::Task> {
+template<class Processor,
+         class DelayedQueue = base::DelayedQueueWrapper<Processor>,
+         class ImmediateQueue = base::ImmediateQueueWrapper<Processor>>
+class EventLoop: private Processor, public DelayedQueue, public ImmediateQueue {
  public:
     using Task = typename Processor::Task;
 
@@ -33,8 +32,8 @@ class EventLoop:
 
     void start(volatile std::atomic_bool* running) {
         while (running->load()) {
-            if (!this->executeDelayed(this)) {
-                this->executeImmediate(this);
+            while (this->executeDelayed(this) || this->executeImmediate(this)) {
+                std::this_thread::yield();
             }
             std::this_thread::sleep_for(base::loopTickDuration);
         }

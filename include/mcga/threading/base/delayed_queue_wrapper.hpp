@@ -6,11 +6,12 @@
 
 namespace mcga::threading::base {
 
-template<class Processor, class Task>
+template<class Processor>
 class DelayedQueueWrapper {
  private:
     using Clock = std::chrono::steady_clock;
  public:
+    using Task = typename Processor::Task;
     using Delay = std::chrono::nanoseconds;
     class DelayedTask;
     using DelayedTaskPtr = std::shared_ptr<DelayedTask>;

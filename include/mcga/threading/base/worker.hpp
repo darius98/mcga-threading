@@ -10,10 +10,9 @@
 
 namespace mcga::threading::base {
 
-template<class Processor>
-class Worker:
-    private Processor,
-    public base::ImmediateQueueWrapper<Processor, typename Processor::Task> {
+template<class Processor,
+         class ImmediateQueue = base::ImmediateQueueWrapper<Processor>>
+class Worker: private Processor, public ImmediateQueue {
  public:
     using Task = typename Processor::Task;
 
@@ -29,7 +28,9 @@ class Worker:
 
     void start(volatile std::atomic_bool* running) {
         while (running->load()) {
-            this->executeImmediate(this);
+            while (this->executeImmediate(this)) {
+                std::this_thread::yield();
+            }
             std::this_thread::sleep_for(base::loopTickDuration);
         }
     }
