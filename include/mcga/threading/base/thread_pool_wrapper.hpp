@@ -4,22 +4,28 @@
 #include <thread>
 
 #include <mcga/threading/base/disallow_copy_and_move.hpp>
+#include <mcga/threading/base/thread_wrapper.hpp>
 
 namespace mcga::threading::base {
 
-template<class Thread, class ThreadIndex = std::atomic_size_t>
+template<class Thread, class Idx = std::atomic_size_t>
 class ThreadPoolWrapper {
  public:
+    struct NumThreads {
+        std::size_t numThreads;
+
+        explicit NumThreads(std::size_t numThreads): numThreads(numThreads) {}
+    };
+
     using Processor = typename Thread::Processor;
 
-    // TODO(darius98): This is ambiguous when Processor takes a `std::size_t`
-    //  argument.
     template<class... Args>
-    explicit ThreadPoolWrapper(Args&&... args, std::size_t numThreads):
+    explicit ThreadPoolWrapper(NumThreads numThreads, Args&&... args):
             processor(std::forward<Args>(args)...) {
-        threads.reserve(numThreads);
-        for (int i = 0; i < numThreads; i += 1) {
-            threads.push_back(new Thread(&started, &processor));
+        threads.reserve(numThreads.numThreads);
+        for (int i = 0; i < numThreads.numThreads; i += 1) {
+            threads.push_back(
+                new Thread(Thread::insideThreadPool, &started, &processor));
         }
     }
 
@@ -28,7 +34,8 @@ class ThreadPoolWrapper {
             processor(std::forward<Args>(args)...) {
         threads.reserve(std::thread::hardware_concurrency());
         for (int i = 0; i < std::thread::hardware_concurrency(); i += 1) {
-            threads.push_back(new Thread(&started, &processor));
+            threads.push_back(
+                new Thread(Thread::insideThreadPool, &started, &processor));
         }
     }
 
@@ -94,7 +101,7 @@ class ThreadPoolWrapper {
     }
 
     Processor processor;
-    ThreadIndex currentThreadId = 0;
+    Idx currentThreadId = 0;
     std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
     volatile std::atomic_bool started = false;
     std::vector<Thread*> threads;

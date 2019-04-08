@@ -1,19 +1,19 @@
 #pragma once
 
+#include <atomic>
+
 #include <mcga/threading/base/thread_pool_wrapper.hpp>
 
 namespace mcga::threading::constructs {
 
-template<class W>
-class EventLoopThreadPoolConstruct: public base::ThreadPoolWrapper
-        <W, typename W::ThreadIndex> {
+template<class W, class Idx = std::atomic_size_t>
+class EventLoopThreadPoolConstruct: public base::ThreadPoolWrapper<W, Idx> {
  public:
     using Task = typename W::Task;
     using DelayedTask = typename W::DelayedTask;
     using DelayedTaskPtr = typename W::DelayedTaskPtr;
 
-    using base::ThreadPoolWrapper<W, typename W::ThreadIndex>
-            ::ThreadPoolWrapper;
+    using base::ThreadPoolWrapper<W, Idx>::ThreadPoolWrapper;
 
     MCGA_THREADING_DISALLOW_COPY_AND_MOVE(EventLoopThreadPoolConstruct);
 

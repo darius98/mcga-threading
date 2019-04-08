@@ -9,10 +9,15 @@ namespace mcga::threading::base {
 
 template<class W>
 class ThreadWrapper {
+ private:
+    struct InsideThreadPoolT {};
+
+    static constexpr InsideThreadPoolT insideThreadPool;
  public:
     using Processor = typename W::Processor;
 
-    explicit ThreadWrapper(volatile std::atomic_bool* started,
+    explicit ThreadWrapper(InsideThreadPoolT,
+                           volatile std::atomic_bool* started,
                            Processor* processor):
             processor(processor),
             ownProcessor(false),
@@ -107,6 +112,8 @@ class ThreadWrapper {
     bool ownStartedFlag = true;
     volatile std::atomic_bool* started;
     std::thread workerThread;
+
+template<class T, class I> friend class ThreadPoolWrapper;
 };
 
 }  // namespace mcga::threading::base

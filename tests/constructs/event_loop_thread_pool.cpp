@@ -40,7 +40,7 @@ TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
     EventLoopThreadPool* pool = nullptr;
 
     setUp([&] {
-        pool = new EventLoopThreadPool(3ul);
+        pool = new EventLoopThreadPool(EventLoopThreadPool::NumThreads(3));
         pool->start();
     });
 

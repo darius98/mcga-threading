@@ -11,13 +11,11 @@
 
 namespace mcga::threading::base {
 
-template<class P,
-         class ImmediateQueue = base::ImmediateQueueWrapper<P>>
+template<class P, class ImmediateQueue = base::ImmediateQueueWrapper<P>>
 class Worker: public ImmediateQueue {
  public:
     using Processor = P;
     using Task = typename Processor::Task;
-    using ThreadIndex = std::atomic_size_t;
 
     Worker() = default;
 
@@ -39,14 +37,7 @@ class Worker: public ImmediateQueue {
     }
 };
 
-template<class Processor>
-class SingleProducerWorker: public Worker
-        <Processor, SingleProducerImmediateQueueWrapper<Processor>> {
- public:
-    using ThreadIndex = std::size_t;
-
-    using Worker<Processor, SingleProducerImmediateQueueWrapper<Processor>>
-            ::Worker;
-};
+template<class P>
+using SingleProducerWorker = Worker<P, SingleProducerImmediateQueueWrapper<P>>;
 
 }  // namespace mcga::threading::base

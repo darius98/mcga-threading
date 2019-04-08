@@ -17,9 +17,6 @@ template<class P,
          class DelayedQueue = base::DelayedQueueWrapper<P>>
 class EventLoop: public DelayedQueue, public ImmediateQueue {
  public:
-    // TODO: This should not be public
-    using ThreadIndex = std::atomic_size_t;
-
     using Processor = P;
     using Task = typename Processor::Task;
 
@@ -44,15 +41,8 @@ class EventLoop: public DelayedQueue, public ImmediateQueue {
     }
 };
 
-template<class Processor>
-class SingleProducerEventLoop: public EventLoop
-        <Processor, SingleProducerImmediateQueueWrapper<Processor>> {
- public:
-    // TODO: This should not be public
-    using ThreadIndex = std::size_t;
-
-    using EventLoop<Processor, SingleProducerImmediateQueueWrapper<Processor>>
-            ::EventLoop;
-};
+template<class P>
+using SingleProducerEventLoop
+        = EventLoop<P, SingleProducerImmediateQueueWrapper<P>>;
 
 }  // namespace mcga::threading::base
