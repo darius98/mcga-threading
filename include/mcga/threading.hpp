@@ -10,6 +10,7 @@
 #include <mcga/threading/constructs/worker_thread_construct.hpp>
 
 // Processors
+#include <mcga/threading/processors/dispatcher_processor.hpp>
 #include <mcga/threading/processors/function_processor.hpp>
 #include <mcga/threading/processors/object_processor.hpp>
 #include <mcga/threading/processors/stateful_function_processor.hpp>
@@ -49,5 +50,7 @@ MCGA_THREADING_DEFINE_TEMPLATE_CONSTRUCTS(processors::ObjectProcessor, Object);
 MCGA_THREADING_DEFINE_TEMPLATE_CONSTRUCTS(processors::StatefulFunctionProcessor, Stateful);
 
 MCGA_THREADING_DEFINE_CONSTRUCTS(processors::StatelessFunctionProcessor, Stateless);
+
+MCGA_THREADING_DEFINE_TEMPLATE_CONSTRUCTS(processors::DispatcherProcessor, Dispatcher);
 
 }  // namespace mcga::threading
