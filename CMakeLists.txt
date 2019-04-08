@@ -24,6 +24,8 @@ install(FILES third_party/concurrentqueue/concurrentqueue.h
                       DESTINATION include/concurrentqueue.h)
 
 if (BuildTests)
+    link_directories(/usr/local/lib)
+
     function (add_kktest TEST_NAME)
         add_executable(${TEST_NAME}_test ${ARGN})
     endfunction ()
@@ -36,7 +38,6 @@ if (BuildTests)
         tests/constructs/worker_thread.cpp
         tests/constructs/worker_thread_pool.cpp
     )
-    target_link_directories(mcga_threading_test PRIVATE /usr/local/lib)
     target_include_directories(mcga_threading_test PRIVATE /usr/local/include)
     target_link_libraries(mcga_threading_test kktest mcga_threading)
 endif ()
