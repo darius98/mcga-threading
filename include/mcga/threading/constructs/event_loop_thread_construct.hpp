@@ -12,6 +12,9 @@ template<class W>
 class EventLoopThreadConstruct : public base::ThreadWrapper<W> {
  public:
     using Task = typename W::Task;
+    // TODO: This should not be public.
+    using ThreadIndex = typename W::ThreadIndex;
+
     using DelayedTask = typename W::DelayedTask;
     using DelayedTaskPtr = typename W::DelayedTaskPtr;
 

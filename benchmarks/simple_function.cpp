@@ -17,12 +17,24 @@
 
 using mcga::threading::EventLoopThread;
 using mcga::threading::EventLoopThreadPool;
+using mcga::threading::SingleProducerEventLoopThread;
+using mcga::threading::SingleProducerEventLoopThreadPool;
+using mcga::threading::SingleProducerWorkerThread;
+using mcga::threading::SingleProducerWorkerThreadPool;
+using mcga::threading::StatefulSingleProducerEventLoopThread;
+using mcga::threading::StatefulSingleProducerEventLoopThreadPool;
+using mcga::threading::StatefulSingleProducerWorkerThread;
+using mcga::threading::StatefulSingleProducerWorkerThreadPool;
 using mcga::threading::StatefulEventLoopThread;
 using mcga::threading::StatefulEventLoopThreadPool;
 using mcga::threading::StatefulWorkerThread;
 using mcga::threading::StatefulWorkerThreadPool;
 using mcga::threading::StatelessEventLoopThread;
 using mcga::threading::StatelessEventLoopThreadPool;
+using mcga::threading::StatelessSingleProducerEventLoopThread;
+using mcga::threading::StatelessSingleProducerEventLoopThreadPool;
+using mcga::threading::StatelessSingleProducerWorkerThread;
+using mcga::threading::StatelessSingleProducerWorkerThreadPool;
 using mcga::threading::StatelessWorkerThread;
 using mcga::threading::StatelessWorkerThreadPool;
 using mcga::threading::WorkerThread;
@@ -46,8 +58,8 @@ void atomicTask() {
     atomicTasksExecuted += 1;
 }
 
-template<class Thread, class Task, class Evpp=false_type>
-nanoseconds sampleDuration(int numSamples, const Task& task, Thread& th, const Evpp&  /*evpp*/=Evpp()) {
+template<class Thread, class Task>
+nanoseconds sampleDuration(int numSamples, const Task& task, Thread& th) {
     tasksExecuted = 0;
     atomicTasksExecuted = 0;
 
@@ -97,6 +109,10 @@ int main(int argc, char** argv) {
     WorkerThread worker;
     StatelessEventLoopThread statelessEventLoop;
     StatelessWorkerThread statelessWorker;
+    SingleProducerEventLoopThread spEventLoop;
+    SingleProducerWorkerThread spWorker;
+    StatelessSingleProducerEventLoopThread spStatelessEventLoop;
+    StatelessSingleProducerWorkerThread spStatelessWorker;
 
 #ifdef LINK_EVPP
     evpp::EventLoopThreadPool evppEventLoopPool1(nullptr, std::thread::hardware_concurrency());
@@ -106,6 +122,10 @@ int main(int argc, char** argv) {
     WorkerThreadPool workerPool;
     StatelessEventLoopThreadPool statelessEventLoopPool;
     StatelessWorkerThreadPool statelessWorkerPool;
+    SingleProducerEventLoopThreadPool spEventLoopPool;
+    SingleProducerWorkerThreadPool spWorkerPool;
+    StatelessSingleProducerEventLoopThreadPool spStatelessEventLoopPool;
+    StatelessSingleProducerWorkerThreadPool spStatelessWorkerPool;
 
     int capture = 1;
     vector<int> capture2(30, 0);
@@ -129,42 +149,62 @@ int main(int argc, char** argv) {
     StatefulEventLoopThreadPool<int&, vector<int>, const double&> statefulEventLoopPool(capture, capture2, capture3);
     StatefulWorkerThread<int&, vector<int>, const double&> statefulWorker(capture, capture2, capture3);
     StatefulWorkerThreadPool<int&, vector<int>, const double&> statefulWorkerPool(capture, capture2, capture3);
+    StatefulSingleProducerEventLoopThread<int&, vector<int>, const double&> spStatefulEventLoop(capture, capture2, capture3);
+    StatefulSingleProducerEventLoopThreadPool<int&, vector<int>, const double&> spStatefulEventLoopPool(capture, capture2, capture3);
+    StatefulSingleProducerWorkerThread<int&, vector<int>, const double&> spStatefulWorker(capture, capture2, capture3);
+    StatefulSingleProducerWorkerThreadPool<int&, vector<int>, const double&> spStatefulWorkerPool(capture, capture2, capture3);
 
     cout << "Non-capturing (" << numSamples << " samples):\n";
 #ifdef LINK_EVPP
-    cout << "\tEVPP EventLoop:         " << sampleDuration(numSamples, task, evppEventLoop1, true_type{}) << "\n";
+    cout << "\tEVPP EventLoop:                       " << sampleDuration(numSamples, task, evppEventLoop1) << "\n";
 #endif
-    cout << "\tEventLoop:              " << sampleDuration(numSamples, task, eventLoop) << "\n";
-    cout << "\tWorker:                 " << sampleDuration(numSamples, task, worker) << "\n";
-    cout << "\tStatelessEventLoop:     " << sampleDuration(numSamples, task, statelessEventLoop) << "\n";
-    cout << "\tStatelessWorker:        " << sampleDuration(numSamples, task, statelessWorker) << "\n";
+    cout << "\tEventLoop:                            " << sampleDuration(numSamples, task, eventLoop) << "\n";
+    cout << "\tWorker:                               " << sampleDuration(numSamples, task, worker) << "\n";
+    cout << "\tStatelessEventLoop:                   " << sampleDuration(numSamples, task, statelessEventLoop) << "\n";
+    cout << "\tStatelessWorker:                      " << sampleDuration(numSamples, task, statelessWorker) << "\n";
+    cout << "\tSingleProducerEventLoop:              " << sampleDuration(numSamples, task, spEventLoop) << "\n";
+    cout << "\tSingleProducerWorker:                 " << sampleDuration(numSamples, task, spWorker) << "\n";
+    cout << "\tStatelessSingleProducerEventLoop:     " << sampleDuration(numSamples, task, spStatelessEventLoop) << "\n";
+    cout << "\tStatelessSingleProducerWorker:        " << sampleDuration(numSamples, task, spStatelessWorker) << "\n";
     cout << "\n";
 #ifdef LINK_EVPP
-    cout << "\tEVPP EventLoopPool:     " << sampleDuration(numSamples, atomicTask, evppEventLoopPool1, true_type{}) << "\n";
+    cout << "\tEVPP EventLoopPool:                   " << sampleDuration(numSamples, atomicTask, evppEventLoopPool1) << "\n";
 #endif
-    cout << "\tEventLoopPool:          " << sampleDuration(numSamples, atomicTask, eventLoopPool) << "\n";
-    cout << "\tWorkerPool:             " << sampleDuration(numSamples, atomicTask, workerPool) << "\n";
-    cout << "\tStatelessEventLoopPool: " << sampleDuration(numSamples, atomicTask, statelessEventLoopPool) << "\n";
-    cout << "\tStatelessWorkerPool:    " << sampleDuration(numSamples, atomicTask, statelessWorkerPool) << "\n";
+    cout << "\tEventLoopPool:                        " << sampleDuration(numSamples, atomicTask, eventLoopPool) << "\n";
+    cout << "\tWorkerPool:                           " << sampleDuration(numSamples, atomicTask, workerPool) << "\n";
+    cout << "\tStatelessEventLoopPool:               " << sampleDuration(numSamples, atomicTask, statelessEventLoopPool) << "\n";
+    cout << "\tStatelessWorkerPool:                  " << sampleDuration(numSamples, atomicTask, statelessWorkerPool) << "\n";
+    cout << "\tSingleProducerEventLoopPool:          " << sampleDuration(numSamples, atomicTask, spEventLoopPool) << "\n";
+    cout << "\tSingleProducerWorkerPool:             " << sampleDuration(numSamples, atomicTask, spWorkerPool) << "\n";
+    cout << "\tStatelessSingleProducerEventLoopPool: " << sampleDuration(numSamples, atomicTask, spStatelessEventLoopPool) << "\n";
+    cout << "\tStatelessSingleProducerWorkerPool:    " << sampleDuration(numSamples, atomicTask, spStatelessWorkerPool) << "\n";
 
     cout << "\n\n";
 
     cout << "Capturing (" << numSamples << " samples):\n";
 #ifdef LINK_EVPP
-    cout << "\tEVPP EventLoop:         " << sampleDuration(numSamples, capturingLambda, evppEventLoop2) << "\n";
+    cout << "\tEVPP EventLoop:                       " << sampleDuration(numSamples, capturingLambda, evppEventLoop2) << "\n";
 #endif
-    cout << "\tEventLoop:              " << sampleDuration(numSamples, capturingLambda, eventLoop) << "\n";
-    cout << "\tWorker:                 " << sampleDuration(numSamples, capturingLambda, worker) << "\n";
-    cout << "\tStatefulEventLoop:      " << sampleDuration(numSamples, parameterLambda, statefulEventLoop) << "\n";
-    cout << "\tStatefulWorker:         " << sampleDuration(numSamples, parameterLambda, statefulWorker) << "\n";
+    cout << "\tEventLoop:                            " << sampleDuration(numSamples, capturingLambda, eventLoop) << "\n";
+    cout << "\tWorker:                               " << sampleDuration(numSamples, capturingLambda, worker) << "\n";
+    cout << "\tStatefulEventLoop:                    " << sampleDuration(numSamples, parameterLambda, statefulEventLoop) << "\n";
+    cout << "\tStatefulWorker:                       " << sampleDuration(numSamples, parameterLambda, statefulWorker) << "\n";
+    cout << "\tSingleProducerEventLoop:              " << sampleDuration(numSamples, capturingLambda, spEventLoop) << "\n";
+    cout << "\tSingleProducerWorker:                 " << sampleDuration(numSamples, capturingLambda, spWorker) << "\n";
+    cout << "\tStatefulSingleProducerEventLoop:      " << sampleDuration(numSamples, parameterLambda, spStatefulEventLoop) << "\n";
+    cout << "\tStatefulSingleProducerWorker:         " << sampleDuration(numSamples, parameterLambda, spStatefulWorker) << "\n";
     cout << "\n";
 #ifdef LINK_EVPP
-    cout << "\tEVPP EventLoopPool:     " << sampleDuration(numSamples, atomicCapturingLambda, evppEventLoopPool2) << "\n";
+    cout << "\tEVPP EventLoopPool:                   " << sampleDuration(numSamples, atomicCapturingLambda, evppEventLoopPool2) << "\n";
 #endif
-    cout << "\tEventLoopPool:          " << sampleDuration(numSamples, atomicCapturingLambda, eventLoopPool) << "\n";
-    cout << "\tWorkerPool:             " << sampleDuration(numSamples, atomicCapturingLambda, workerPool) << "\n";
-    cout << "\tStatefulEventLoopPool:  " << sampleDuration(numSamples, atomicParameterLambda, statefulEventLoopPool) << "\n";
-    cout << "\tStatefulWorkerPool:     " << sampleDuration(numSamples, atomicParameterLambda, statefulWorkerPool) << "\n";
+    cout << "\tEventLoopPool:                        " << sampleDuration(numSamples, atomicCapturingLambda, eventLoopPool) << "\n";
+    cout << "\tWorkerPool:                           " << sampleDuration(numSamples, atomicCapturingLambda, workerPool) << "\n";
+    cout << "\tStatefulEventLoopPool:                " << sampleDuration(numSamples, atomicParameterLambda, statefulEventLoopPool) << "\n";
+    cout << "\tStatefulWorkerPool:                   " << sampleDuration(numSamples, atomicParameterLambda, statefulWorkerPool) << "\n";
+    cout << "\tSingleProducerEventLoopPool:          " << sampleDuration(numSamples, atomicCapturingLambda, spEventLoopPool) << "\n";
+    cout << "\tSingleProducerWorkerPool:             " << sampleDuration(numSamples, atomicCapturingLambda, spWorkerPool) << "\n";
+    cout << "\tStatefulSingleProducerEventLoopPool:  " << sampleDuration(numSamples, atomicParameterLambda, spStatefulEventLoopPool) << "\n";
+    cout << "\tStatefulSingleProducerWorkerPool:     " << sampleDuration(numSamples, atomicParameterLambda, spStatefulWorkerPool) << "\n";
 
     return 0;
 }

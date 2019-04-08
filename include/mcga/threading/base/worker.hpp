@@ -7,6 +7,7 @@
 #include <mcga/threading/base/disallow_copy_and_move.hpp>
 #include <mcga/threading/base/loop_tick_duration.hpp>
 #include <mcga/threading/base/immediate_queue_wrapper.hpp>
+#include <mcga/threading/base/single_producer_immediate_queue_wrapper.hpp>
 
 namespace mcga::threading::base {
 
@@ -15,6 +16,7 @@ template<class Processor,
 class Worker: private Processor, public ImmediateQueue {
  public:
     using Task = typename Processor::Task;
+    using ThreadIndex = std::atomic_size_t;
 
     using Processor::Processor;
 
@@ -34,6 +36,16 @@ class Worker: private Processor, public ImmediateQueue {
             std::this_thread::sleep_for(base::loopTickDuration);
         }
     }
+};
+
+template<class Processor>
+class SingleProducerWorker: public Worker
+        <Processor, SingleProducerImmediateQueueWrapper<Processor>> {
+ public:
+    using ThreadIndex = std::size_t;
+
+    using Worker<Processor, SingleProducerImmediateQueueWrapper<Processor>>
+            ::Worker;
 };
 
 }  // namespace mcga::threading::base

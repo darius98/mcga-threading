@@ -4,20 +4,22 @@
 #include <thread>
 #include <vector>
 
-#include <concurrentqueue.h>
-
 #include <mcga/threading/base/delayed_queue_wrapper.hpp>
 #include <mcga/threading/base/disallow_copy_and_move.hpp>
 #include <mcga/threading/base/immediate_queue_wrapper.hpp>
+#include <mcga/threading/base/single_producer_immediate_queue_wrapper.hpp>
 #include <mcga/threading/base/loop_tick_duration.hpp>
 
 namespace mcga::threading::base {
 
 template<class Processor,
-         class DelayedQueue = base::DelayedQueueWrapper<Processor>,
-         class ImmediateQueue = base::ImmediateQueueWrapper<Processor>>
+         class ImmediateQueue = base::ImmediateQueueWrapper<Processor>,
+         class DelayedQueue = base::DelayedQueueWrapper<Processor>>
 class EventLoop: private Processor, public DelayedQueue, public ImmediateQueue {
  public:
+    // TODO: This should not be public
+    using ThreadIndex = std::atomic_size_t;
+
     using Task = typename Processor::Task;
 
     using Processor::Processor;
@@ -38,6 +40,17 @@ class EventLoop: private Processor, public DelayedQueue, public ImmediateQueue {
             std::this_thread::sleep_for(base::loopTickDuration);
         }
     }
+};
+
+template<class Processor>
+class SingleProducerEventLoop: public EventLoop
+        <Processor, SingleProducerImmediateQueueWrapper<Processor>> {
+ public:
+    // TODO: This should not be public
+    using ThreadIndex = std::size_t;
+
+    using EventLoop<Processor, SingleProducerImmediateQueueWrapper<Processor>>
+            ::EventLoop;
 };
 
 }  // namespace mcga::threading::base

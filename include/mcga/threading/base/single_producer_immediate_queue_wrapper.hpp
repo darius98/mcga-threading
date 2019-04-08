@@ -5,12 +5,12 @@
 namespace mcga::threading::base {
 
 template<class Processor>
-class ImmediateQueueWrapper {
+class SingleProducerImmediateQueueWrapper {
  public:
     using Task = typename Processor::Task;
 
     void enqueue(Task task) {
-        queue.enqueue(std::move(task));
+        queue.enqueue(queueProducerToken, std::move(task));
     }
 
  protected:
@@ -27,7 +27,7 @@ class ImmediateQueueWrapper {
             queueBuffer.resize(queueSize);
         }
         queueBufferSize = queue.try_dequeue_bulk(
-                queueToken,
+                queueConsumerToken,
                 queueBuffer.begin(),
                 queueBuffer.size());
         for (size_t i = 0; queueBufferSize > 0; --queueBufferSize, ++ i) {
@@ -38,7 +38,8 @@ class ImmediateQueueWrapper {
 
  private:
     moodycamel::ConcurrentQueue<Task> queue;
-    moodycamel::ConsumerToken queueToken{queue};
+    moodycamel::ProducerToken queueProducerToken{queue};
+    moodycamel::ConsumerToken queueConsumerToken{queue};
     std::vector<Task> queueBuffer;
     std::size_t queueBufferSize = 0;
 };

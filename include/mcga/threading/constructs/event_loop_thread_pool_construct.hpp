@@ -5,13 +5,15 @@
 namespace mcga::threading::constructs {
 
 template<class W>
-class EventLoopThreadPoolConstruct : public base::ThreadPoolWrapper<W> {
+class EventLoopThreadPoolConstruct: public base::ThreadPoolWrapper
+        <W, typename W::ThreadIndex> {
  public:
     using Task = typename W::Task;
     using DelayedTask = typename W::DelayedTask;
     using DelayedTaskPtr = typename W::DelayedTaskPtr;
 
-    using base::ThreadPoolWrapper<W>::ThreadPoolWrapper;
+    using base::ThreadPoolWrapper<W, typename W::ThreadIndex>
+            ::ThreadPoolWrapper;
 
     MCGA_THREADING_DISALLOW_COPY_AND_MOVE(EventLoopThreadPoolConstruct);
 

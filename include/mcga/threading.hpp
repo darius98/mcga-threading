@@ -15,26 +15,30 @@
 #include <mcga/threading/processors/stateful_function_processor.hpp>
 #include <mcga/threading/processors/stateless_function_processor.hpp>
 
-#define MCGA_THREADING_DEFINE_CONSTRUCT(TEMPLATE_START, TEMPLATE_END, PROCESSOR, PREFIX, TYPE)              \
+#define MCGA_THREADING_DEFINE_CONSTRUCT(TEMPLATE_START, TEMPLATE_END, PROCESSOR, PREFIX, PROD, TYPE)        \
     TEMPLATE_START                                                                                          \
-    using PREFIX##TYPE##Thread                                                                              \
+    using PREFIX##PROD##TYPE##Thread                                                                        \
         = mcga::threading::constructs::TYPE##ThreadConstruct                                                \
-                <mcga::threading::base::TYPE<PROCESSOR TEMPLATE_END>>;                                      \
+                <mcga::threading::base::PROD##TYPE<PROCESSOR TEMPLATE_END>>;                                \
                                                                                                             \
     TEMPLATE_START                                                                                          \
-    using PREFIX##TYPE##ThreadPool                                                                          \
+    using PREFIX##PROD##TYPE##ThreadPool                                                                    \
         = mcga::threading::constructs::TYPE##ThreadPoolConstruct                                            \
-                <PREFIX##TYPE##Thread TEMPLATE_END>;
+                <PREFIX##PROD##TYPE##Thread TEMPLATE_END>;
 
-#define MCGA_THREADING_DEFINE_CONSTRUCT_TYPES(TEMPLATE_START, TEMPLATE_END, PROCESSOR, PREFIX)              \
-    MCGA_THREADING_DEFINE_CONSTRUCT(TEMPLATE_START, TEMPLATE_END, PROCESSOR, PREFIX, EventLoop);            \
-    MCGA_THREADING_DEFINE_CONSTRUCT(TEMPLATE_START, TEMPLATE_END, PROCESSOR, PREFIX, Worker);
+#define MCGA_THREADING_DEFINE_CONSTRUCT_TYPES(TEMPLATE_START, TEMPLATE_END, PROCESSOR, PREFIX, PROD)        \
+    MCGA_THREADING_DEFINE_CONSTRUCT(TEMPLATE_START, TEMPLATE_END, PROCESSOR, PREFIX, PROD, EventLoop);      \
+    MCGA_THREADING_DEFINE_CONSTRUCT(TEMPLATE_START, TEMPLATE_END, PROCESSOR, PREFIX, PROD, Worker);
+
+#define MCGA_THREADING_DEFINE_CONSTRUCT_PRODS(TEMPLATE_START, TEMPLATE_END, PROCESSOR, PREFIX)              \
+    MCGA_THREADING_DEFINE_CONSTRUCT_TYPES(TEMPLATE_START, TEMPLATE_END, PROCESSOR, PREFIX, );               \
+    MCGA_THREADING_DEFINE_CONSTRUCT_TYPES(TEMPLATE_START, TEMPLATE_END, PROCESSOR, PREFIX, SingleProducer);
 
 #define MCGA_THREADING_DEFINE_CONSTRUCTS(PROCESSOR, PREFIX)                                                 \
-    MCGA_THREADING_DEFINE_CONSTRUCT_TYPES( , , PROCESSOR, PREFIX);
+    MCGA_THREADING_DEFINE_CONSTRUCT_PRODS( , , PROCESSOR, PREFIX);
 
 #define MCGA_THREADING_DEFINE_TEMPLATE_CONSTRUCTS(PROCESSOR, PREFIX)                                        \
-    MCGA_THREADING_DEFINE_CONSTRUCT_TYPES(template<class... T>, <T...>, PROCESSOR, PREFIX);                 \
+    MCGA_THREADING_DEFINE_CONSTRUCT_PRODS(template<class... T>, <T...>, PROCESSOR, PREFIX);
 
 namespace mcga::threading {
 

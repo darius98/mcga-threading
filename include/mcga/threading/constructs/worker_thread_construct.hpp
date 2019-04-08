@@ -8,6 +8,8 @@ template<class W>
 class WorkerThreadConstruct : public base::ThreadWrapper<W> {
  public:
     using Task = typename W::Task;
+    // TODO: This should not be public.
+    using ThreadIndex = typename W::ThreadIndex;
 
     using base::ThreadWrapper<W>::ThreadWrapper;
 

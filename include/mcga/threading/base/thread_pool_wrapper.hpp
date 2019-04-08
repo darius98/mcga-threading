@@ -7,7 +7,7 @@
 
 namespace mcga::threading::base {
 
-template<class Thread>
+template<class Thread, class ThreadIndex = std::atomic_size_t>
 class ThreadPoolWrapper {
  public:
     // TODO(darius98): This is ambiguous when Worker takes a `std::size_t`
@@ -67,7 +67,7 @@ class ThreadPoolWrapper {
     }
  protected:
     Thread* nextThread() {
-        return threads[currentThreadId.fetch_add(1) % threads.size()];
+        return threads[(++currentThreadId) % threads.size()];
     }
 
  private:
@@ -83,7 +83,7 @@ class ThreadPoolWrapper {
         }
     }
 
-    std::atomic_size_t currentThreadId = 0;
+    ThreadIndex currentThreadId = 0;
     std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
     volatile std::atomic_bool started = false;
     std::vector<Thread*> threads;

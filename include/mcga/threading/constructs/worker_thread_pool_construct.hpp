@@ -5,11 +5,13 @@
 namespace mcga::threading::constructs {
 
 template<class W>
-class WorkerThreadPoolConstruct : public base::ThreadPoolWrapper<W> {
+class WorkerThreadPoolConstruct:
+        public base::ThreadPoolWrapper<W, typename W::ThreadIndex> {
  public:
     using Task = typename W::Task;
 
-    using base::ThreadPoolWrapper<W>::ThreadPoolWrapper;
+    using base::ThreadPoolWrapper<W, typename W::ThreadIndex>
+            ::ThreadPoolWrapper;
 
     MCGA_THREADING_DISALLOW_COPY_AND_MOVE(WorkerThreadPoolConstruct);
 
