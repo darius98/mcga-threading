@@ -15,7 +15,6 @@ include(FindThreads)
 add_library(mcga_threading INTERFACE)
 target_include_directories(mcga_threading
     INTERFACE third_party/concurrentqueue
-    INTERFACE third_party/readerwriterqueue
     INTERFACE include
 )
 target_link_libraries(mcga_threading INTERFACE ${CMAKE_THREAD_LIBS_INIT})
@@ -23,12 +22,6 @@ target_link_libraries(mcga_threading INTERFACE ${CMAKE_THREAD_LIBS_INIT})
 install(DIRECTORY include DESTINATION .)
 install(FILES third_party/concurrentqueue/concurrentqueue.h
                       DESTINATION include/concurrentqueue.h)
-install(FILES third_party/concurrentqueue/blockingconcurrentqueue.h
-                      DESTINATION include/blockingconcurrentqueue.h)
-install(FILES third_party/readerwriterqueue/readerwriterqueue.h
-                        DESTINATION include/readerwriterqueue.h)
-install(FILES third_party/readerwriterqueue/atomicops.h
-                        DESTINATION include/atomicops.h)
 
 if (BuildTests)
     function (add_kktest TEST_NAME)
