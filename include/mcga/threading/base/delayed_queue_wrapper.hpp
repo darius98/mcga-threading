@@ -4,79 +4,21 @@
 #include <chrono>
 #include <mutex>
 
+#include "delayed_task.hpp"
+
 namespace mcga::threading::base {
 
 template<class Processor>
 class DelayedQueueWrapper {
- private:
-    using Clock = std::chrono::steady_clock;
  public:
     using Task = typename Processor::Task;
-    using Delay = std::chrono::nanoseconds;
-    class DelayedTask;
-    using DelayedTaskPtr = std::shared_ptr<DelayedTask>;
-    class DelayedTask {
-     public:
-        bool isCancelled() const {
-            return cancelled;
-        }
-
-        bool cancel() {
-            return cancelled.exchange(true);
-        }
-
-        bool isInterval() const {
-            return isRepeated;
-        }
-
-     private:
-        class MakeSharedEnabler : public DelayedTask {
-         public:
-            MakeSharedEnabler(Task task, const Delay& delay, bool isRepeated)
-                    : DelayedTask(std::move(task), delay, isRepeated) {}
-        };
-
-        struct Compare {
-            inline bool operator()(
-                    const DelayedTaskPtr& a, const DelayedTaskPtr& b) const {
-                return a->timePoint > b->timePoint;
-            }
-        };
-
-        static DelayedTaskPtr delayed(Task task, const Delay& delay) {
-            return std::make_shared<MakeSharedEnabler>(
-                    std::move(task), delay, false);
-        }
-
-        static DelayedTaskPtr interval(Task task, const Delay& delay) {
-            return std::make_shared<MakeSharedEnabler>(
-                    std::move(task), delay, true);
-        }
-
-        DelayedTask(Task task, const Delay& delay, bool isRepeated):
-                task(std::move(task)), delay(delay), isRepeated(isRepeated) {
-            setTimePoint();
-        }
-
-        bool shouldExecute() const {
-            return timePoint <= Clock::now();
-        }
-
-        void setTimePoint() {
-            timePoint = Clock::now()
-                        + std::chrono::duration_cast<Clock::duration>(delay);
-        }
-
-        Task task;
-        Delay delay;
-        Clock::time_point timePoint;
-        bool isRepeated;
-        std::atomic_bool cancelled = false;
-
-     friend class DelayedQueueWrapper;
-    };
-
+ private:
+    using DelayedTask = DelayedTask<Task>;
+    using Clock = typename DelayedTask::Clock;
  public:
+    using DelayedTaskPtr = typename DelayedTask::DelayedTaskPtr;
+    using Delay = std::chrono::nanoseconds;
+
     DelayedTaskPtr enqueueDelayed(Task task, const Delay& delay) {
         return enqueueDelayedTask(DelayedTask::delayed(std::move(task), delay));
     }
@@ -129,6 +71,7 @@ class DelayedQueueWrapper {
         }
         return true;
     }
+
  private:
     mutable std::mutex queueLock;
     std::priority_queue<DelayedTaskPtr,

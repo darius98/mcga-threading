@@ -10,7 +10,6 @@ template<class W, class Idx = std::atomic_size_t>
 class EventLoopThreadPoolConstruct: public base::ThreadPoolWrapper<W, Idx> {
  public:
     using Task = typename W::Task;
-    using DelayedTask = typename W::DelayedTask;
     using DelayedTaskPtr = typename W::DelayedTaskPtr;
 
     using base::ThreadPoolWrapper<W, Idx>::ThreadPoolWrapper;

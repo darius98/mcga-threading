@@ -13,7 +13,6 @@ class EventLoopThreadConstruct : public base::ThreadWrapper<W> {
  public:
     using Task = typename W::Task;
 
-    using DelayedTask = typename W::DelayedTask;
     using DelayedTaskPtr = typename W::DelayedTaskPtr;
 
     using base::ThreadWrapper<W>::ThreadWrapper;
