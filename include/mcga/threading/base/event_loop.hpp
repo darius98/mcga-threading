@@ -12,17 +12,18 @@
 
 namespace mcga::threading::base {
 
-template<class Processor,
-         class ImmediateQueue = base::ImmediateQueueWrapper<Processor>,
-         class DelayedQueue = base::DelayedQueueWrapper<Processor>>
-class EventLoop: private Processor, public DelayedQueue, public ImmediateQueue {
+template<class P,
+         class ImmediateQueue = base::ImmediateQueueWrapper<P>,
+         class DelayedQueue = base::DelayedQueueWrapper<P>>
+class EventLoop: public DelayedQueue, public ImmediateQueue {
  public:
     // TODO: This should not be public
     using ThreadIndex = std::atomic_size_t;
 
+    using Processor = P;
     using Task = typename Processor::Task;
 
-    using Processor::Processor;
+    EventLoop() = default;
 
     MCGA_THREADING_DISALLOW_COPY_AND_MOVE(EventLoop);
 
@@ -32,9 +33,10 @@ class EventLoop: private Processor, public DelayedQueue, public ImmediateQueue {
         return this->getImmediateQueueSize() + this->getDelayedQueueSize();
     }
 
-    void start(volatile std::atomic_bool* running) {
+    void start(volatile std::atomic_bool* running, Processor* processor) {
         while (running->load()) {
-            while (this->executeDelayed(this) || this->executeImmediate(this)) {
+            while (this->executeDelayed(processor)
+                    || this->executeImmediate(processor)) {
                 std::this_thread::yield();
             }
             std::this_thread::sleep_for(base::loopTickDuration);

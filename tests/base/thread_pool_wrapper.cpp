@@ -27,13 +27,15 @@ using std::vector;
 namespace {
 
 struct BasicWorker {
+    using Processor = int;
+
     volatile int numSpins = 0;
 
     size_t size() const {
         return 0;
     }
 
-    void start(volatile atomic_bool* running) {
+    void start(volatile atomic_bool* running, Processor* /*processor*/) {
         while (running->load()) {
             numSpins += 1;
             std::this_thread::sleep_for(20ns);

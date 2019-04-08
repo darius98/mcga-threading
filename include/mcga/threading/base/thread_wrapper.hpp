@@ -10,19 +10,19 @@ namespace mcga::threading::base {
 template<class W>
 class ThreadWrapper {
  public:
-    // TODO(darius98): This is ambiguous when worker takes a
-    //  `volatile std::atomic_bool*` argument.
-    template<class... Args>
-    explicit ThreadWrapper(volatile std::atomic_bool* started, Args&&... args):
-            worker(std::forward<Args>(args)...),
-            ownStartedFlag(false),
-            started(started) {}
+    using Processor = typename W::Processor;
+
+    explicit ThreadWrapper(volatile std::atomic_bool* started,
+                           Processor* processor):
+            processor(processor),
+            ownProcessor(false),
+            started(started),
+            ownStartedFlag(false) {}
 
     template<class... Args>
     explicit ThreadWrapper(Args&&... args):
-            worker(std::forward<Args>(args)...) {
-        started = new std::atomic_bool(false);
-    }
+            processor(new Processor(std::forward<Args>(args)...)),
+            started(new std::atomic_bool(false)) {}
 
     MCGA_THREADING_DISALLOW_COPY_AND_MOVE(ThreadWrapper);
 
@@ -30,6 +30,9 @@ class ThreadWrapper {
         stopRaw();
         if (ownStartedFlag) {
             delete started;
+        }
+        if (ownProcessor) {
+            delete processor;
         }
     }
 
@@ -49,7 +52,7 @@ class ThreadWrapper {
             if (!started->load()) {
                 workerThread = std::thread([this]() {
                     started->store(true);
-                    worker.start(started);
+                    worker.start(started, processor);
                 });
                 while (!started->load()) {
                     std::this_thread::yield();
@@ -59,7 +62,7 @@ class ThreadWrapper {
             std::atomic_bool localStarted = false;
             workerThread = std::thread([this, &localStarted]() {
                 localStarted.store(true);
-                worker.start(started);
+                worker.start(started, processor);
             });
             while (!localStarted.load()) {
                 std::this_thread::yield();
@@ -71,6 +74,10 @@ class ThreadWrapper {
     void stop() {
         stopRaw();
         isInStartOrStop.clear();
+    }
+
+    Processor* getProcessor() {
+        return processor;
     }
 
  private:
@@ -93,6 +100,9 @@ class ThreadWrapper {
     W worker;
 
  private:
+    bool ownProcessor = true;
+    Processor* processor;
+
     std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
     bool ownStartedFlag = true;
     volatile std::atomic_bool* started;

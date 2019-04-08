@@ -10,23 +10,25 @@ namespace mcga::threading::base {
 template<class Thread, class ThreadIndex = std::atomic_size_t>
 class ThreadPoolWrapper {
  public:
-    // TODO(darius98): This is ambiguous when Worker takes a `std::size_t`
+    using Processor = typename Thread::Processor;
+
+    // TODO(darius98): This is ambiguous when Processor takes a `std::size_t`
     //  argument.
     template<class... Args>
-    explicit ThreadPoolWrapper(Args&&... args, std::size_t numThreads) {
+    explicit ThreadPoolWrapper(Args&&... args, std::size_t numThreads):
+            processor(std::forward<Args>(args)...) {
         threads.reserve(numThreads);
         for (int i = 0; i < numThreads; i += 1) {
-            threads.push_back(
-                new Thread(&started, std::forward<Args>(args)...));
+            threads.push_back(new Thread(&started, &processor));
         }
     }
 
     template<class... Args>
-    explicit ThreadPoolWrapper(Args&&... args) {
+    explicit ThreadPoolWrapper(Args&&... args):
+            processor(std::forward<Args>(args)...) {
         threads.reserve(std::thread::hardware_concurrency());
         for (int i = 0; i < std::thread::hardware_concurrency(); i += 1) {
-            threads.push_back(
-                new Thread(&started, std::forward<Args>(args)...));
+            threads.push_back(new Thread(&started, &processor));
         }
     }
 
@@ -34,6 +36,9 @@ class ThreadPoolWrapper {
 
     ~ThreadPoolWrapper() {
         stopRaw();
+        for (Thread* thread: threads) {
+            delete thread;
+        }
     }
 
     std::size_t sizeApprox() const {
@@ -65,6 +70,11 @@ class ThreadPoolWrapper {
         stopRaw();
         isInStartOrStop.clear();
     }
+
+    Processor* getProcessor() {
+        return processor;
+    }
+
  protected:
     Thread* nextThread() {
         return threads[(++currentThreadId) % threads.size()];
@@ -83,6 +93,7 @@ class ThreadPoolWrapper {
         }
     }
 
+    Processor processor;
     ThreadIndex currentThreadId = 0;
     std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
     volatile std::atomic_bool started = false;

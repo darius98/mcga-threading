@@ -11,14 +11,15 @@
 
 namespace mcga::threading::base {
 
-template<class Processor,
-         class ImmediateQueue = base::ImmediateQueueWrapper<Processor>>
-class Worker: private Processor, public ImmediateQueue {
+template<class P,
+         class ImmediateQueue = base::ImmediateQueueWrapper<P>>
+class Worker: public ImmediateQueue {
  public:
+    using Processor = P;
     using Task = typename Processor::Task;
     using ThreadIndex = std::atomic_size_t;
 
-    using Processor::Processor;
+    Worker() = default;
 
     MCGA_THREADING_DISALLOW_COPY_AND_MOVE(Worker);
 
@@ -28,9 +29,9 @@ class Worker: private Processor, public ImmediateQueue {
         return this->getImmediateQueueSize();
     }
 
-    void start(volatile std::atomic_bool* running) {
+    void start(volatile std::atomic_bool* running, Processor* processor) {
         while (running->load()) {
-            while (this->executeImmediate(this)) {
+            while (this->executeImmediate(processor)) {
                 std::this_thread::yield();
             }
             std::this_thread::sleep_for(base::loopTickDuration);
