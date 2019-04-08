@@ -26,15 +26,15 @@ class ObjectProcessor<T> {
  public:
     using Task = T;
 
-    explicit ObjectProcessor(std::function<void(const T&)> func):
+    explicit ObjectProcessor(std::function<void(Task)> func):
             func(func) {}
 
-    void executeTask(const Task& task) {
+    void executeTask(Task task) {
         func(task);
     }
 
  private:
-    std::function<void(const T&)> func;
+    std::function<void(Task)> func;
 };
 
 }  // namespace mcga::threading::processors

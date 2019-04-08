@@ -77,19 +77,11 @@ class DelayedQueueWrapper {
     };
 
  public:
-    DelayedTaskPtr enqueueDelayed(const Task& task, const Delay& delay) {
-        return enqueueDelayedTask(DelayedTask::delayed(task, delay));
-    }
-
-    DelayedTaskPtr enqueueDelayed(Task&& task, const Delay& delay) {
+    DelayedTaskPtr enqueueDelayed(Task task, const Delay& delay) {
         return enqueueDelayedTask(DelayedTask::delayed(std::move(task), delay));
     }
 
-    DelayedTaskPtr enqueueInterval(const Task& task, const Delay& delay) {
-        return enqueueDelayedTask(DelayedTask::interval(task, delay));
-    }
-
-    DelayedTaskPtr enqueueInterval(Task&& task, const Delay& delay) {
+    DelayedTaskPtr enqueueInterval(Task task, const Delay& delay) {
         return enqueueDelayedTask(
                 DelayedTask::interval(std::move(task), delay));
     }

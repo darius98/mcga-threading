@@ -21,35 +21,19 @@ class EventLoopThreadConstruct : public base::ThreadWrapper<W> {
 
     ~EventLoopThreadConstruct() = default;
 
-    void enqueue(const Task& task) {
-        this->worker.enqueue(task);
-    }
-
-    void enqueue(Task&& task) {
+    void enqueue(Task task) {
         this->worker.enqueue(std::move(task));
     }
 
     template<class Rep, class Ratio>
     DelayedTaskPtr enqueueDelayed(
-            const Task& task, const std::chrono::duration<Rep, Ratio>& delay) {
-        return this->worker.enqueueDelayed(task, delay);
-    }
-
-    template<class Rep, class Ratio>
-    DelayedTaskPtr enqueueDelayed(
-            Task&& task, const std::chrono::duration<Rep, Ratio>& delay) {
+            Task task, const std::chrono::duration<Rep, Ratio>& delay) {
         return this->worker.enqueueDelayed(std::move(task), delay);
     }
 
     template<class Rep, class Ratio>
     DelayedTaskPtr enqueueInterval(
-            const Task& task, const std::chrono::duration<Rep, Ratio>& delay) {
-        return this->worker.enqueueInterval(task, delay);
-    }
-
-    template<class Rep, class Ratio>
-    DelayedTaskPtr enqueueInterval(
-            Task&& task, const std::chrono::duration<Rep, Ratio>& delay) {
+            Task task, const std::chrono::duration<Rep, Ratio>& delay) {
         return this->worker.enqueueInterval(std::move(task), delay);
     }
 };

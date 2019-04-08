@@ -7,11 +7,7 @@ class ImmediateQueueWrapper {
  public:
     using Task = typename Processor::Task;
 
-    void enqueue(const Task& task) {
-        queue.enqueue(task);
-    }
-
-    void enqueue(Task&& task) {
+    void enqueue(Task task) {
         queue.enqueue(std::move(task));
     }
 

@@ -15,11 +15,7 @@ class WorkerThreadPoolConstruct : public base::ThreadPoolWrapper<W> {
 
     ~WorkerThreadPoolConstruct() = default;
 
-    void enqueue(const Task& task) {
-        this->nextThread()->enqueue(task);
-    }
-
-    void enqueue(Task&& task) {
+    void enqueue(Task task) {
         this->nextThread()->enqueue(std::move(task));
     }
 };
