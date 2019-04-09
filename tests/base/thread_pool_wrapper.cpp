@@ -28,6 +28,7 @@ namespace {
 
 struct BasicWorker {
     using Processor = int;
+    using Task = int;
 
     volatile int numSpins = 0;
 

@@ -15,7 +15,9 @@ class ThreadWrapper {
     static constexpr InsideThreadPoolT insideThreadPool;
 
  public:
+    using Wrapped = W;
     using Processor = typename W::Processor;
+    using Task = typename W::Task;
 
     explicit ThreadWrapper(InsideThreadPoolT /*unused*/,
                            volatile std::atomic_bool* started,

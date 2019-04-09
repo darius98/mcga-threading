@@ -4,10 +4,7 @@
 #include <mcga/threading/base/worker.hpp>
 
 // Constructs
-#include <mcga/threading/constructs/event_loop_thread_construct.hpp>
-#include <mcga/threading/constructs/event_loop_thread_pool_construct.hpp>
-#include <mcga/threading/constructs/worker_thread_pool_construct.hpp>
-#include <mcga/threading/constructs/worker_thread_construct.hpp>
+#include <mcga/threading/constructs.hpp>
 
 // Processors
 #include <mcga/threading/processors/dispatcher_processor.hpp>

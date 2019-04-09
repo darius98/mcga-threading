@@ -45,4 +45,36 @@ template<class P>
 using SingleProducerEventLoop
         = EventLoop<P, SingleProducerImmediateQueueWrapper<P>>;
 
+template<class Wrapper>
+class EventLoopConstruct : public Wrapper {
+ public:
+    using Task = typename Wrapper::Wrapped::Task;
+    using Delay = typename Wrapper::Wrapped::Delay;
+    using DelayedTaskPtr = typename Wrapper::Wrapped::DelayedTaskPtr;
+
+    using Wrapper::Wrapper;
+
+    MCGA_THREADING_DISALLOW_COPY_AND_MOVE(EventLoopConstruct);
+
+    ~EventLoopConstruct() = default;
+
+    void enqueue(Task task) {
+        this->getWorker()->enqueue(std::move(task));
+    }
+
+    template<class Rep, class Ratio>
+    DelayedTaskPtr enqueueDelayed(
+            Task task, const std::chrono::duration<Rep, Ratio>& delay) {
+        return this->getWorker()->enqueueDelayed(
+                std::move(task), std::chrono::duration_cast<Delay>(delay));
+    }
+
+    template<class Rep, class Ratio>
+    DelayedTaskPtr enqueueInterval(
+            Task task, const std::chrono::duration<Rep, Ratio>& delay) {
+        return this->getWorker()->enqueueInterval(
+                std::move(task), std::chrono::duration_cast<Delay>(delay));
+    }
+};
+
 }  // namespace mcga::threading::base

@@ -1,9 +1,5 @@
 #pragma once
 
-#include <vector>
-
-#include <concurrentqueue.h>
-
 #include <mcga/threading/base/disallow_copy_and_move.hpp>
 #include <mcga/threading/base/loop_tick_duration.hpp>
 #include <mcga/threading/base/immediate_queue_wrapper.hpp>
@@ -39,5 +35,21 @@ class Worker: public ImmediateQueue {
 
 template<class P>
 using SingleProducerWorker = Worker<P, SingleProducerImmediateQueueWrapper<P>>;
+
+template<class Wrapper>
+class WorkerConstruct : public Wrapper {
+ public:
+    using Task = typename Wrapper::Task;
+
+    using Wrapper::Wrapper;
+
+    MCGA_THREADING_DISALLOW_COPY_AND_MOVE(WorkerConstruct);
+
+    ~WorkerConstruct() = default;
+
+    void enqueue(Task task) {
+        this->getWorker()->enqueue(std::move(task));
+    }
+};
 
 }  // namespace mcga::threading::base

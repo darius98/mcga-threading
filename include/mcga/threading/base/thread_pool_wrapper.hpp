@@ -17,7 +17,9 @@ class ThreadPoolWrapper {
         explicit NumThreads(std::size_t numThreads): numThreads(numThreads) {}
     };
 
+    using Wrapped = typename Thread::Wrapped;
     using Processor = typename Thread::Processor;
+    using Task = typename Thread::Task;
 
     template<class... Args>
     explicit ThreadPoolWrapper(NumThreads numThreads, Args&&... args):
