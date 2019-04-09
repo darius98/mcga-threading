@@ -48,7 +48,7 @@ struct BasicWorker {
 
 TEST_CASE(ThreadPoolWrapper, "ThreadPoolWrapper") {
     test("Starting and stopping ThreadPoolWrapper", [&] {
-        auto loop = new ThreadPoolWrapper<ThreadWrapper<BasicWorker>>(8ul);
+        auto loop = new ThreadPoolWrapper<BasicWorker, std::atomic_size_t>(8ul);
         expect(loop->isRunning(), isFalse);
         loop->start();
         expect(loop->isRunning(), isTrue);
@@ -63,7 +63,7 @@ TEST_CASE(ThreadPoolWrapper, "ThreadPoolWrapper") {
         constexpr int numWorkers = 100;
         constexpr int numOps = 100;
 
-        auto loop = new ThreadPoolWrapper<ThreadWrapper<BasicWorker>>(8ul);
+        auto loop = new ThreadPoolWrapper<BasicWorker, std::atomic_size_t>(8ul);
 
         vector<thread*> workers(numWorkers, nullptr);
         for (int i = 0; i < numWorkers; ++ i) {

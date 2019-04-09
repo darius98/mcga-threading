@@ -41,7 +41,7 @@ using std::operator""ms;
 namespace this_thread = std::this_thread;
 
 using TestingProcessor = BasicProcessor<int>;
-using EventLoopThread = EventLoopThreadConstruct<EventLoop<TestingProcessor>>;
+using EventLoopThread = EventLoopThreadConstruct<TestingProcessor>;
 
 ostream& operator<<(ostream& os, const milliseconds& ms) {
     os << ms.count() << "ms";

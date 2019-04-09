@@ -19,8 +19,6 @@ using kktest::matchers::eachElement;
 using kktest::matchers::hasSize;
 using kktest::matchers::isEqualTo;
 using kktest::matchers::isNotEqualTo;
-using mcga::threading::base::EventLoop;
-using mcga::threading::constructs::EventLoopThreadConstruct;
 using mcga::threading::constructs::EventLoopThreadPoolConstruct;
 using mcga::threading::testing::randomBool;
 using mcga::threading::testing::randomDelay;
@@ -33,8 +31,7 @@ using std::vector;
 namespace this_thread = std::this_thread;
 
 using TestingProcessor = BasicProcessor<int>;
-using EventLoopThread = EventLoopThreadConstruct<EventLoop<TestingProcessor>>;
-using EventLoopThreadPool = EventLoopThreadPoolConstruct<EventLoopThread>;
+using EventLoopThreadPool = EventLoopThreadPoolConstruct<TestingProcessor>;
 
 TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
     EventLoopThreadPool* pool = nullptr;

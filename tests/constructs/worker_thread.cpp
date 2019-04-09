@@ -14,7 +14,6 @@ using kktest::setUp;
 using kktest::tearDown;
 using kktest::TestConfig;
 using kktest::matchers::isEqualTo;
-using mcga::threading::base::Worker;
 using mcga::threading::constructs::WorkerThreadConstruct;
 using mcga::threading::testing::BasicProcessor;
 using std::operator""ms;
@@ -23,7 +22,7 @@ using std::vector;
 namespace this_thread = std::this_thread;
 
 using TestingProcessor = BasicProcessor<int>;
-using WorkerThread = WorkerThreadConstruct<Worker<TestingProcessor>>;
+using WorkerThread = WorkerThreadConstruct<TestingProcessor>;
 
 TEST_CASE(Worker, "Worker") {
     WorkerThread* worker = nullptr;

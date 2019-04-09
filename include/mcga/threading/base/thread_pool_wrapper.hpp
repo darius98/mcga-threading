@@ -8,8 +8,11 @@
 
 namespace mcga::threading::base {
 
-template<class Thread, class Idx = std::atomic_size_t>
+template<class W, class Idx>
 class ThreadPoolWrapper {
+ private:
+    using Thread = ThreadWrapper<W>;
+
  public:
     struct NumThreads {
         std::size_t numThreads;
@@ -17,9 +20,9 @@ class ThreadPoolWrapper {
         explicit NumThreads(std::size_t numThreads): numThreads(numThreads) {}
     };
 
-    using Wrapped = typename Thread::Wrapped;
-    using Processor = typename Thread::Processor;
-    using Task = typename Thread::Task;
+    using Wrapped = W;
+    using Processor = typename W::Processor;
+    using Task = typename W::Task;
 
     template<class... Args>
     explicit ThreadPoolWrapper(NumThreads numThreads, Args&&... args):
@@ -85,8 +88,8 @@ class ThreadPoolWrapper {
     }
 
  protected:
-    Thread* getWorker() {
-        return threads[(++currentThreadId) % threads.size()];
+    Wrapped* getWorker() {
+        return threads[(++currentThreadId) % threads.size()]->getWorker();
     }
 
  private:

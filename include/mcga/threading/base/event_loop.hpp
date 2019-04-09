@@ -48,7 +48,7 @@ using SingleProducerEventLoop
 template<class Wrapper>
 class EventLoopConstruct : public Wrapper {
  public:
-    using Task = typename Wrapper::Wrapped::Task;
+    using Task = typename Wrapper::Task;
     using Delay = typename Wrapper::Wrapped::Delay;
     using DelayedTaskPtr = typename Wrapper::Wrapped::DelayedTaskPtr;
 
