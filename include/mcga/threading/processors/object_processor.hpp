@@ -30,7 +30,7 @@ class ObjectProcessor<T> {
             func(func) {}
 
     void executeTask(Task task) {
-        func(task);
+        func(std::move(task));
     }
 
  private:

@@ -9,6 +9,7 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 option(BuildTests "Build tests using the KKTest library" OFF)
 option(BuildBenchmarks "Build the benchmarks" OFF)
 option(BenchmarkAgainstEvpp "Include the evpp library's EventLoop and EventLoopPool in the benchmark" OFF)
+option(BuildExamples "Build examples" OFF)
 
 include(FindThreads)
 
@@ -57,4 +58,14 @@ if (BuildBenchmarks)
     add_benchmark(event_loop_delay_error benchmarks/event_loop_delay_error.cpp)
     add_benchmark(simple_function benchmarks/simple_function.cpp)
     add_benchmark(object_processing benchmarks/object_processing.cpp)
+endif ()
+
+if (BuildExamples)
+    function (add_example example_name)
+        add_executable(${example_name} examples/${example_name}.cpp)
+        target_link_libraries(${example_name} PUBLIC mcga_threading)
+    endfunction ()
+
+    add_example(intervals)
+    add_example(move_only_object_processor)
 endif ()

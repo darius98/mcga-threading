@@ -59,11 +59,7 @@ class DelayedQueueWrapper {
             return false;
         }
         if (!delayedTask->isCancelled()) {
-            if (delayedTask->isInterval()) {
-                processor->executeTask(delayedTask->task);
-            } else {
-                processor->executeTask(std::move(delayedTask->task));
-            }
+            processor->executeTask(std::move(delayedTask->task));
         }
         if (!delayedTask->isCancelled() && delayedTask->isInterval()) {
             delayedTask->setTimePoint();
