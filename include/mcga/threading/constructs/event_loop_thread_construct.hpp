@@ -12,7 +12,7 @@ template<class W>
 class EventLoopThreadConstruct : public base::ThreadWrapper<W> {
  public:
     using Task = typename W::Task;
-
+    using Delay = typename W::Delay;
     using DelayedTaskPtr = typename W::DelayedTaskPtr;
 
     using base::ThreadWrapper<W>::ThreadWrapper;
@@ -28,13 +28,15 @@ class EventLoopThreadConstruct : public base::ThreadWrapper<W> {
     template<class Rep, class Ratio>
     DelayedTaskPtr enqueueDelayed(
             Task task, const std::chrono::duration<Rep, Ratio>& delay) {
-        return this->worker.enqueueDelayed(std::move(task), delay);
+        return this->worker.enqueueDelayed(
+                std::move(task), std::chrono::duration_cast<Delay>(delay));
     }
 
     template<class Rep, class Ratio>
     DelayedTaskPtr enqueueInterval(
             Task task, const std::chrono::duration<Rep, Ratio>& delay) {
-        return this->worker.enqueueInterval(std::move(task), delay);
+        return this->worker.enqueueInterval(
+                std::move(task), std::chrono::duration_cast<Delay>(delay));
     }
 };
 

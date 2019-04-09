@@ -10,6 +10,7 @@ template<class W, class Idx = std::atomic_size_t>
 class EventLoopThreadPoolConstruct: public base::ThreadPoolWrapper<W, Idx> {
  public:
     using Task = typename W::Task;
+    using Delay = typename W::Delay;
     using DelayedTaskPtr = typename W::DelayedTaskPtr;
 
     using base::ThreadPoolWrapper<W, Idx>::ThreadPoolWrapper;
@@ -25,13 +26,15 @@ class EventLoopThreadPoolConstruct: public base::ThreadPoolWrapper<W, Idx> {
     template<class Rep, class Ratio>
     DelayedTaskPtr enqueueDelayed(
             Task task, const std::chrono::duration<Rep, Ratio>& delay) {
-        return this->nextThread()->enqueueDelayed(std::move(task), delay);
+        return this->nextThread()->enqueueDelayed(
+                std::move(task), std::chrono::duration_cast<Delay>(delay));
     }
 
     template<class Rep, class Ratio>
     DelayedTaskPtr enqueueInterval(
             Task task, const std::chrono::duration<Rep, Ratio>& delay) {
-        return this->nextThread()->enqueueInterval(std::move(task), delay);
+        return this->nextThread()->enqueueInterval(
+                std::move(task), std::chrono::duration_cast<Delay>(delay));
     }
 };
 
