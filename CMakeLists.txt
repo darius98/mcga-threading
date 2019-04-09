@@ -62,10 +62,11 @@ endif ()
 
 if (BuildExamples)
     function (add_example example_name)
-        add_executable(${example_name} examples/${example_name}.cpp)
-        target_link_libraries(${example_name} PUBLIC mcga_threading)
+        add_executable(${example_name}_example examples/${example_name}.cpp)
+        target_link_libraries(${example_name}_example PUBLIC mcga_threading)
     endfunction ()
 
     add_example(intervals)
     add_example(move_only_object_processor)
+    add_example(own_processor)
 endif ()
