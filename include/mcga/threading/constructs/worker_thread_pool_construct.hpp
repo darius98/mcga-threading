@@ -1,7 +1,5 @@
 #pragma once
 
-#include <atomic>
-
 #include <mcga/threading/base/thread_pool_wrapper.hpp>
 
 namespace mcga::threading::constructs {
@@ -18,7 +16,7 @@ class WorkerThreadPoolConstruct: public base::ThreadPoolWrapper<W, Idx> {
     ~WorkerThreadPoolConstruct() = default;
 
     void enqueue(Task task) {
-        this->nextThread()->enqueue(std::move(task));
+        this->getWorker()->enqueue(std::move(task));
     }
 };
 

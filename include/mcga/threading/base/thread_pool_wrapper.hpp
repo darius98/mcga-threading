@@ -83,7 +83,7 @@ class ThreadPoolWrapper {
     }
 
  protected:
-    Thread* nextThread() {
+    Thread* getWorker() {
         return threads[(++currentThreadId) % threads.size()];
     }
 

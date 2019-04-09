@@ -1,7 +1,5 @@
 #pragma once
 
-#include <atomic>
-
 #include <mcga/threading/base/thread_pool_wrapper.hpp>
 
 namespace mcga::threading::constructs {
@@ -20,20 +18,20 @@ class EventLoopThreadPoolConstruct: public base::ThreadPoolWrapper<W, Idx> {
     ~EventLoopThreadPoolConstruct() = default;
 
     void enqueue(Task task) {
-        this->nextThread()->enqueue(std::move(task));
+        this->getWorker()->enqueue(std::move(task));
     }
 
     template<class Rep, class Ratio>
     DelayedTaskPtr enqueueDelayed(
             Task task, const std::chrono::duration<Rep, Ratio>& delay) {
-        return this->nextThread()->enqueueDelayed(
+        return this->getWorker()->enqueueDelayed(
                 std::move(task), std::chrono::duration_cast<Delay>(delay));
     }
 
     template<class Rep, class Ratio>
     DelayedTaskPtr enqueueInterval(
             Task task, const std::chrono::duration<Rep, Ratio>& delay) {
-        return this->nextThread()->enqueueInterval(
+        return this->getWorker()->enqueueInterval(
                 std::move(task), std::chrono::duration_cast<Delay>(delay));
     }
 };

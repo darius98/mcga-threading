@@ -13,10 +13,11 @@ class ThreadWrapper {
     struct InsideThreadPoolT {};
 
     static constexpr InsideThreadPoolT insideThreadPool;
+
  public:
     using Processor = typename W::Processor;
 
-    explicit ThreadWrapper(InsideThreadPoolT,
+    explicit ThreadWrapper(InsideThreadPoolT /*unused*/,
                            volatile std::atomic_bool* started,
                            Processor* processor):
             processor(processor),
@@ -85,6 +86,11 @@ class ThreadWrapper {
         return processor;
     }
 
+ protected:
+    W* getWorker() {
+        return &worker;
+    }
+
  private:
     void stopRaw() {
         while (isInStartOrStop.test_and_set()) {
@@ -101,10 +107,7 @@ class ThreadWrapper {
         }
     }
 
- protected:
     W worker;
-
- private:
     bool ownProcessor = true;
     Processor* processor;
 

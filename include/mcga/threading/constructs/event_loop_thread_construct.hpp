@@ -1,9 +1,5 @@
 #pragma once
 
-#include <chrono>
-
-#include <concurrentqueue.h>
-
 #include <mcga/threading/base/thread_wrapper.hpp>
 
 namespace mcga::threading::constructs {
@@ -22,20 +18,20 @@ class EventLoopThreadConstruct : public base::ThreadWrapper<W> {
     ~EventLoopThreadConstruct() = default;
 
     void enqueue(Task task) {
-        this->worker.enqueue(std::move(task));
+        this->getWorker()->enqueue(std::move(task));
     }
 
     template<class Rep, class Ratio>
     DelayedTaskPtr enqueueDelayed(
             Task task, const std::chrono::duration<Rep, Ratio>& delay) {
-        return this->worker.enqueueDelayed(
+        return this->getWorker()->enqueueDelayed(
                 std::move(task), std::chrono::duration_cast<Delay>(delay));
     }
 
     template<class Rep, class Ratio>
     DelayedTaskPtr enqueueInterval(
             Task task, const std::chrono::duration<Rep, Ratio>& delay) {
-        return this->worker.enqueueInterval(
+        return this->getWorker()->enqueueInterval(
                 std::move(task), std::chrono::duration_cast<Delay>(delay));
     }
 };

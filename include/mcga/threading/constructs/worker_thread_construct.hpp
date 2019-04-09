@@ -16,7 +16,7 @@ class WorkerThreadConstruct : public base::ThreadWrapper<W> {
     ~WorkerThreadConstruct() = default;
 
     void enqueue(Task task) {
-        this->worker.enqueue(std::move(task));
+        this->getWorker()->enqueue(std::move(task));
     }
 };
 
