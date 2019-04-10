@@ -32,12 +32,12 @@ public:
              << endl;
     }
 };
-using OwnEventLoopThread = EventLoopThreadConstruct<Processor>;
-using OwnEventLoopThreadPool = EventLoopThreadPoolConstruct<Processor>;
-using OwnWorkerThread = WorkerThreadConstruct<Processor>;
+MCGA_THREADING_DEFINE_CONSTRUCTS(Processor, Own);
 
 int main() {
     OwnEventLoopThread loop;
+
+    cout << "Thread: \n";
 
     loop.start();
     for (int i = 1; i <= 100; ++ i) {
@@ -47,6 +47,8 @@ int main() {
     std::this_thread::sleep_for(1000ms);
 
     loop.stop();
+
+    cout << "Pool: \n";
 
     OwnEventLoopThreadPool pool;
 
