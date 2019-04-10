@@ -4,6 +4,7 @@
 #include <mcga/threading/base/loop_tick_duration.hpp>
 #include <mcga/threading/base/immediate_queue_wrapper.hpp>
 #include <mcga/threading/base/single_producer_immediate_queue_wrapper.hpp>
+#include <mcga/threading/base/opaque_enqueuer.hpp>
 
 namespace mcga::threading::base {
 
@@ -12,6 +13,10 @@ class Worker: public ImmediateQueue {
  public:
     using Processor = P;
     using Task = typename Processor::Task;
+
+    static_assert(hasExecuteTaskSimple<Processor>
+                  || hasExecuteTaskWithWorkerEnqueuer<Processor>,
+                  "No viable executeTask method for Worker construct");
 
     Worker() = default;
 
@@ -25,12 +30,17 @@ class Worker: public ImmediateQueue {
 
     void start(volatile std::atomic_bool* running, Processor* processor) {
         while (running->load()) {
-            while (this->executeImmediate(processor)) {
+            while (this->executeImmediate(processor, &enqueuer)) {
                 std::this_thread::yield();
             }
             std::this_thread::sleep_for(base::loopTickDuration);
         }
     }
+
+ private:
+    OpaqueWorkerEnqueuer<Task> enqueuer{
+        std::bind(&ImmediateQueue::enqueue, this, std::placeholders::_1)
+    };
 };
 
 template<class P>

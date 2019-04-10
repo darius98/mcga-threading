@@ -9,13 +9,14 @@ namespace mcga::threading::base {
 template<class Task>
 class DelayedTask {
  public:
+    using Delay = std::chrono::nanoseconds;
+
     bool cancel() {
         return cancelled.exchange(true);
     }
 
  private:
     using Clock = std::chrono::steady_clock;
-    using Delay = std::chrono::nanoseconds;
     using DelayedTaskPtr = std::shared_ptr<DelayedTask>;
 
     class MakeSharedEnabler : public DelayedTask {

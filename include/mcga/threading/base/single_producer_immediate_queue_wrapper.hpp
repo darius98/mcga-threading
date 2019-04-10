@@ -2,6 +2,8 @@
 
 #include <concurrentqueue.h>
 
+#include <mcga/threading/base/execute_task_variants.hpp>
+
 namespace mcga::threading::base {
 
 template<class Processor>
@@ -18,7 +20,8 @@ class SingleProducerImmediateQueueWrapper {
         return queue.size_approx() + queueBufferSize;
     }
 
-    bool executeImmediate(Processor* processor) {
+    template<class Enqueuer>
+    bool executeImmediate(Processor* processor, Enqueuer* enqueuer) {
         auto queueSize = queue.size_approx();
         if (queueSize == 0) {
             return false;
@@ -31,7 +34,7 @@ class SingleProducerImmediateQueueWrapper {
                 queueBuffer.begin(),
                 queueBuffer.size());
         for (size_t i = 0; queueBufferSize > 0; --queueBufferSize, ++ i) {
-            processor->executeTask(std::move(queueBuffer[i]));
+            executeTask(std::move(queueBuffer[i]), processor, enqueuer);
         }
         return true;
     }
