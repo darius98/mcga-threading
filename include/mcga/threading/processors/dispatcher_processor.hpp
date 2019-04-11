@@ -25,12 +25,13 @@ class DispatcherProcessor {
         }
     }
 };
+
 template<class T>
 class DispatcherProcessor<T> {
 public:
     using Task = T;
 
-    using Callback = std::function<void(T)>;
+    using Callback = std::function<void(T&&)>;
 
     std::vector<Callback> callbacks;
 
@@ -38,9 +39,9 @@ public:
         callbacks.push_back(std::move(callback));
     }
 
-    void handleTask(const Task& task) {
+    void executeTask(Task&& task) {
         for (const Callback& callback: callbacks) {
-            callback(task);
+            callback(std::move(task));
         }
     }
 };

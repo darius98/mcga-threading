@@ -6,7 +6,7 @@ class StatelessFunctionProcessor {
  public:
     using Task = void (*)();
 
-    static void executeTask(const Task& task) {
+    void executeTask(const Task& task) {
         task();
     }
 };

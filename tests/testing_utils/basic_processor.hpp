@@ -25,7 +25,7 @@ struct BasicProcessor {
         afterHandle = nullptr;
     }
 
-    static void executeTask(const Task& task) {
+    void executeTask(const Task& task) {
         std::lock_guard lock(processMutex);
 
         objects.push_back(task);
