@@ -1,30 +1,25 @@
 cmake_minimum_required(VERSION 3.12.1)
-project(MCGA_Threading)
-set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-
-option(BuildTests "Build tests using the KKTest library" OFF)
-option(BuildBenchmarks "Build the benchmarks" OFF)
-option(BenchmarkAgainstEvpp "Include the evpp library's EventLoop and EventLoopPool in the benchmark" OFF)
-option(BuildExamples "Build examples" OFF)
+option(MCGA_threading_tests "Build MCGA Threading tests" OFF)
+option(MCGA_threading_benchmarks "Build MCGA Threading benchmarks" OFF)
+option(MCGA_threading_benchmark_against_evpp "Include the evpp library's EventLoop and EventLoopPool in the MCGA Threading benchmark" OFF)
+option(MCGA_threading_examples "Build MCGA Threading examples" OFF)
 
 include(FindThreads)
 
 add_library(mcga_threading INTERFACE)
 target_include_directories(mcga_threading
-    INTERFACE third_party/concurrentqueue
+    INTERFACE ../third_party/concurrentqueue
     INTERFACE include
 )
 target_link_libraries(mcga_threading INTERFACE ${CMAKE_THREAD_LIBS_INIT})
 
-install(DIRECTORY include DESTINATION .)
-install(FILES third_party/concurrentqueue/concurrentqueue.h
-                      DESTINATION include/concurrentqueue.h)
+install(DIRECTORY include DESTINATION ..)
+install(FILES ../third_party/concurrentqueue/concurrentqueue.h
+                      DESTINATION threading/include/concurrentqueue.h)
 
-if (BuildTests)
+if (MCGA_threading_tests)
+    # TODO(darius98): Remove this once kktest is part of MCGA.
     link_directories(/usr/local/lib)
 
     function (add_kktest TEST_NAME)
@@ -39,19 +34,21 @@ if (BuildTests)
         tests/constructs/worker_thread.cpp
         tests/constructs/worker_thread_pool.cpp
     )
+    # TODO(darius98): Remove this once kktest is part of MCGA.
     target_include_directories(mcga_threading_test PRIVATE /usr/local/include)
     target_link_libraries(mcga_threading_test kktest mcga_threading)
 endif ()
 
-if (BuildBenchmarks)
+if (MCGA_threading_benchmarks)
     function (add_benchmark BENCHMARK_NAME)
-        add_executable(${BENCHMARK_NAME}_benchmark ${ARGN})
-        target_link_libraries(${BENCHMARK_NAME}_benchmark mcga_threading)
+        set(BENCHMARK_TARGET mcga_threading_${BENCHMARK_NAME}_benchmark)
+        add_executable(${BENCHMARK_TARGET} ${ARGN})
+        target_link_libraries(${BENCHMARK_TARGET} mcga_threading)
 
-        if (BenchmarkAgainstEvpp)
-            target_compile_definitions(${BENCHMARK_NAME}_benchmark PUBLIC LINK_EVPP)
-            target_include_directories(${BENCHMARK_NAME}_benchmark PUBLIC /usr/local/include)
-            target_link_libraries(${BENCHMARK_NAME}_benchmark evpp_static event glog)
+        if (MCGA_threading_benchmark_against_evpp)
+            target_compile_definitions(${BENCHMARK_TARGET} PUBLIC LINK_EVPP)
+            target_include_directories(${BENCHMARK_TARGET} PUBLIC /usr/local/include)
+            target_link_libraries(${BENCHMARK_TARGET} evpp_static event glog)
         endif ()
     endfunction ()
 
@@ -60,10 +57,10 @@ if (BuildBenchmarks)
     add_benchmark(object_processing benchmarks/object_processing.cpp)
 endif ()
 
-if (BuildExamples)
+if (MCGA_threading_examples)
     function (add_example example_name)
-        add_executable(${example_name}_example examples/${example_name}.cpp)
-        target_link_libraries(${example_name}_example PUBLIC mcga_threading)
+        add_executable(mcga_threading_${example_name}_example examples/${example_name}.cpp)
+        target_link_libraries(mcga_threading_${example_name}_example PUBLIC mcga_threading)
     endfunction ()
 
     add_example(intervals)
