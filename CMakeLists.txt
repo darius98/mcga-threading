@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.12.1)
+project(MCGA_threading)
+set(CMAKE_CXX_STANDARD 17)
+
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 option(MCGA_threading_tests "Build MCGA Threading tests" OFF)
 option(MCGA_threading_benchmarks "Build MCGA Threading benchmarks" OFF)
@@ -9,19 +14,16 @@ include(FindThreads)
 
 add_library(mcga_threading INTERFACE)
 target_include_directories(mcga_threading
-    INTERFACE ../third_party/concurrentqueue
+    INTERFACE third_party/concurrentqueue
     INTERFACE include
 )
 target_link_libraries(mcga_threading INTERFACE ${CMAKE_THREAD_LIBS_INIT})
 
 install(DIRECTORY include DESTINATION ..)
-install(FILES ../third_party/concurrentqueue/concurrentqueue.h
-                      DESTINATION threading/include/concurrentqueue.h)
+install(FILES third_party/concurrentqueue/concurrentqueue.h
+        DESTINATION include/concurrentqueue.h)
 
 if (MCGA_threading_tests)
-    # TODO(darius98): Remove this once kktest is part of MCGA.
-    link_directories(/usr/local/lib)
-
     function (add_kktest TEST_NAME)
         add_executable(${TEST_NAME}_test ${ARGN})
     endfunction ()
@@ -34,8 +36,6 @@ if (MCGA_threading_tests)
         tests/constructs/worker_thread.cpp
         tests/constructs/worker_thread_pool.cpp
     )
-    # TODO(darius98): Remove this once kktest is part of MCGA.
-    target_include_directories(mcga_threading_test PRIVATE /usr/local/include)
     target_link_libraries(mcga_threading_test kktest mcga_threading)
 endif ()
 
