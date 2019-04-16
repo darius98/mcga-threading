@@ -9,11 +9,11 @@
 
 #include "../testing_utils/basic_processor.hpp"
 
-using kktest::multiRunTest;
-using kktest::setUp;
-using kktest::tearDown;
-using kktest::TestConfig;
-using kktest::matchers::isEqualTo;
+using mcga::test::multiRunTest;
+using mcga::test::setUp;
+using mcga::test::tearDown;
+using mcga::test::TestConfig;
+using mcga::test::matchers::isEqualTo;
 using mcga::threading::constructs::WorkerThreadConstruct;
 using mcga::threading::testing::BasicProcessor;
 using std::operator""ms;

@@ -12,13 +12,13 @@
 
 #include "../testing_utils/basic_processor.hpp"
 
-using kktest::multiRunTest;
-using kktest::setUp;
-using kktest::tearDown;
-using kktest::matchers::eachElement;
-using kktest::matchers::hasSize;
-using kktest::matchers::isEqualTo;
-using kktest::matchers::isNotEqualTo;
+using mcga::test::multiRunTest;
+using mcga::test::setUp;
+using mcga::test::tearDown;
+using mcga::test::matchers::eachElement;
+using mcga::test::matchers::hasSize;
+using mcga::test::matchers::isEqualTo;
+using mcga::test::matchers::isNotEqualTo;
 using mcga::threading::constructs::WorkerThreadPoolConstruct;
 using mcga::threading::testing::BasicProcessor;
 using std::atomic_int;
