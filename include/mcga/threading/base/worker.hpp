@@ -1,21 +1,21 @@
 #pragma once
 
 #include <mcga/threading/base/disallow_copy_and_move.hpp>
-#include <mcga/threading/base/loop_tick_duration.hpp>
 #include <mcga/threading/base/immediate_queue_wrapper.hpp>
-#include <mcga/threading/base/single_producer_immediate_queue_wrapper.hpp>
+#include <mcga/threading/base/loop_tick_duration.hpp>
 #include <mcga/threading/base/opaque_enqueuer.hpp>
+#include <mcga/threading/base/single_producer_immediate_queue_wrapper.hpp>
 
 namespace mcga::threading::base {
 
 template<class P, class ImmediateQueue = base::ImmediateQueueWrapper<P>>
-class Worker: public ImmediateQueue {
- public:
+class Worker : public ImmediateQueue {
+  public:
     using Processor = P;
     using Task = typename Processor::Task;
 
-    static_assert(hasExecuteTaskSimple<Processor>
-                  || hasExecuteTaskWithWorkerEnqueuer<Processor>,
+    static_assert(hasExecuteTaskSimple<
+                    Processor> || hasExecuteTaskWithWorkerEnqueuer<Processor>,
                   "No viable executeTask method for Worker construct");
 
     Worker() = default;
@@ -37,10 +37,9 @@ class Worker: public ImmediateQueue {
         }
     }
 
- private:
+  private:
     OpaqueWorkerEnqueuer<Task> enqueuer{
-        std::bind(&ImmediateQueue::enqueue, this, std::placeholders::_1)
-    };
+      std::bind(&ImmediateQueue::enqueue, this, std::placeholders::_1)};
 };
 
 template<class P>
@@ -48,7 +47,7 @@ using SingleProducerWorker = Worker<P, SingleProducerImmediateQueueWrapper<P>>;
 
 template<class Wrapper>
 class WorkerConstruct : public Wrapper {
- public:
+  public:
     using Task = typename Wrapper::Task;
 
     using Wrapper::Wrapper;

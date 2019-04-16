@@ -8,7 +8,7 @@ namespace mcga::threading::processors {
 
 template<class... Args>
 class DispatcherProcessor {
- public:
+  public:
     using Task = std::tuple<Args...>;
 
     using Callback = std::function<void(Args...)>;
@@ -28,7 +28,7 @@ class DispatcherProcessor {
 
 template<class T>
 class DispatcherProcessor<T> {
-public:
+  public:
     using Task = T;
 
     using Callback = std::function<void(T&&)>;

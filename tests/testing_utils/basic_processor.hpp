@@ -30,7 +30,7 @@ struct BasicProcessor {
 
         objects.push_back(task);
         threadIds.insert(
-                std::hash<std::thread::id>()(std::this_thread::get_id()));
+          std::hash<std::thread::id>()(std::this_thread::get_id()));
         if (afterHandle) {
             afterHandle();
         }

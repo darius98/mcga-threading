@@ -9,12 +9,12 @@ using mcga::threading::constructs::EventLoopThreadPoolConstruct;
 using std::operator""ms;
 using std::cout;
 using std::endl;
-using std::mutex;
 using std::make_unique;
+using std::mutex;
 using std::unique_ptr;
 
 class Processor {
- public:
+  public:
     using Task = unique_ptr<int>;
 
     mutex printMutex;
@@ -34,7 +34,7 @@ int main() {
 
     loop.start();
     loop.enqueueDelayed(make_unique<int>(300), 300ms);
-    for (int i = 1; i <= 100; ++ i) {
+    for (int i = 1; i <= 100; ++i) {
         loop.enqueue(make_unique<int>(i));
     }
 
@@ -46,7 +46,7 @@ int main() {
 
     pool.start();
     pool.enqueueDelayed(make_unique<int>(300), 300ms);
-    for (int i = 1; i <= 100; ++ i) {
+    for (int i = 1; i <= 100; ++i) {
         pool.enqueue(make_unique<int>(i));
     }
 

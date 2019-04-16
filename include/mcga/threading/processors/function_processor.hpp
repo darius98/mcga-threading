@@ -5,7 +5,7 @@
 namespace mcga::threading::processors {
 
 class FunctionProcessor {
- public:
+  public:
     using Task = std::function<void()>;
 
     void executeTask(const Task& task) {

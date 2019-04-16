@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     evpp::EventLoopThread evppLoop;
     evppLoop.Start(true);
 
-    for (int i = 0; i < numSamples; ++ i) {
+    for (int i = 0; i < numSamples; ++i) {
         Stopwatch watch;
         bool done = false;
         evppLoop.loop()->RunAfter(3, [&evppTracker, watch, &done]() {
@@ -62,13 +62,15 @@ int main(int argc, char** argv) {
     EventLoopThread loop;
     loop.start();
 
-    for (int i = 0; i < numSamples; ++ i) {
+    for (int i = 0; i < numSamples; ++i) {
         Stopwatch watch;
         bool done = false;
-        loop.enqueueDelayed([&tracker, watch, &done]() {
-            watch.track(&tracker, 3ms);
-            done = true;
-        }, 3ms);
+        loop.enqueueDelayed(
+          [&tracker, watch, &done]() {
+              watch.track(&tracker, 3ms);
+              done = true;
+          },
+          3ms);
         while (!done) {
             yield();
         }

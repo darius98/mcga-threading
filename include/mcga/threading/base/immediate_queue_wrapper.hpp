@@ -8,14 +8,14 @@ namespace mcga::threading::base {
 
 template<class Processor>
 class ImmediateQueueWrapper {
- public:
+  public:
     using Task = typename Processor::Task;
 
     void enqueue(Task task) {
         queue.enqueue(std::move(task));
     }
 
- protected:
+  protected:
     std::size_t getImmediateQueueSize() const {
         return queue.size_approx() + queueBufferSize;
     }
@@ -30,20 +30,18 @@ class ImmediateQueueWrapper {
             queueBuffer.resize(queueSize);
         }
         queueBufferSize = queue.try_dequeue_bulk(
-                queueToken,
-                queueBuffer.begin(),
-                queueBuffer.size());
-        for (size_t i = 0; queueBufferSize > 0; --queueBufferSize, ++ i) {
+          queueToken, queueBuffer.begin(), queueBuffer.size());
+        for (size_t i = 0; queueBufferSize > 0; --queueBufferSize, ++i) {
             executeTask(std::move(queueBuffer[i]), processor, enqueuer);
         }
         return true;
     }
 
- private:
+  private:
     moodycamel::ConcurrentQueue<Task> queue;
     moodycamel::ConsumerToken queueToken{queue};
     std::vector<Task> queueBuffer;
     std::size_t queueBufferSize = 0;
 };
 
-} // namespace mcga::threading::base
+}  // namespace mcga::threading::base

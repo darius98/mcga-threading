@@ -12,9 +12,9 @@
 
 #include "../testing_utils/basic_processor.hpp"
 
+using kktest::multiRunTest;
 using kktest::setUp;
 using kktest::tearDown;
-using kktest::multiRunTest;
 using kktest::matchers::eachElement;
 using kktest::matchers::hasSize;
 using kktest::matchers::isEqualTo;
@@ -45,55 +45,63 @@ TEST_CASE(WorkerThreadPool, "WorkerThreadPool") {
         pool = nullptr;
     });
 
-    multiRunTest("Tasks enqueued in a WorkerThreadPool are executed on "
-                 "multiple threads, different from the main thread", 10, [&] {
-        constexpr int task = 1;
-        constexpr int numTasks = 1000000;
+    multiRunTest(
+      "Tasks enqueued in a WorkerThreadPool are executed on "
+      "multiple threads, different from the main thread",
+      10,
+      [&] {
+          constexpr int task = 1;
+          constexpr int numTasks = 1000000;
 
-        for (int i = 0; i < numTasks; ++ i) {
-            pool->enqueue(task);
-        }
+          for (int i = 0; i < numTasks; ++i) {
+              pool->enqueue(task);
+          }
 
-        while (TestingProcessor::numProcessed() != numTasks) {
-            this_thread::sleep_for(1ms);
-        }
-        this_thread::sleep_for(10ms);
+          while (TestingProcessor::numProcessed() != numTasks) {
+              this_thread::sleep_for(1ms);
+          }
+          this_thread::sleep_for(10ms);
 
-        expect(TestingProcessor::numProcessed(), isEqualTo(numTasks));
-        expect(TestingProcessor::threadIds, hasSize(3));
-        expect(TestingProcessor::threadIds, eachElement(isNotEqualTo(
-                hash<thread::id>()(this_thread::get_id()))));
-    });
+          expect(TestingProcessor::numProcessed(), isEqualTo(numTasks));
+          expect(TestingProcessor::threadIds, hasSize(3));
+          expect(TestingProcessor::threadIds,
+                 eachElement(
+                   isNotEqualTo(hash<thread::id>()(this_thread::get_id()))));
+      });
 
     multiRunTest("Tasks enqueued from multiple threads in a WorkerThreadPool"
                  " are executed on multiple threads, different from the main "
-                 "thread", 10, [&] {
-        constexpr int task = 1;
-        constexpr int numWorkers = 100;
-        constexpr int numWorkerJobs = 1000;
+                 "thread",
+                 10,
+                 [&] {
+                     constexpr int task = 1;
+                     constexpr int numWorkers = 100;
+                     constexpr int numWorkerJobs = 1000;
 
-        vector<thread*> workers(numWorkers, nullptr);
-        for (int i = 0; i < numWorkers; ++ i) {
-            workers[i] = new thread([&] {
-                for (int j = 0; j < numWorkerJobs; ++ j) {
-                    pool->enqueue(task);
-                }
-            });
-        }
-        for (int i = 0; i < numWorkers; ++ i) {
-            workers[i]->join();
-            delete workers[i];
-        }
+                     vector<thread*> workers(numWorkers, nullptr);
+                     for (int i = 0; i < numWorkers; ++i) {
+                         workers[i] = new thread([&] {
+                             for (int j = 0; j < numWorkerJobs; ++j) {
+                                 pool->enqueue(task);
+                             }
+                         });
+                     }
+                     for (int i = 0; i < numWorkers; ++i) {
+                         workers[i]->join();
+                         delete workers[i];
+                     }
 
-        while (TestingProcessor::numProcessed() != numWorkers * numWorkerJobs) {
-            this_thread::sleep_for(1ms);
-        }
-        this_thread::sleep_for(10ms);
+                     while (TestingProcessor::numProcessed()
+                            != numWorkers * numWorkerJobs) {
+                         this_thread::sleep_for(1ms);
+                     }
+                     this_thread::sleep_for(10ms);
 
-        expect(TestingProcessor::numProcessed(),
-               isEqualTo(numWorkers * numWorkerJobs));
-        expect(TestingProcessor::threadIds, hasSize(3));
-        expect(TestingProcessor::threadIds, eachElement(isNotEqualTo(
-                hash<thread::id>()(this_thread::get_id()))));
-    });
+                     expect(TestingProcessor::numProcessed(),
+                            isEqualTo(numWorkers * numWorkerJobs));
+                     expect(TestingProcessor::threadIds, hasSize(3));
+                     expect(TestingProcessor::threadIds,
+                            eachElement(isNotEqualTo(
+                              hash<thread::id>()(this_thread::get_id()))));
+                 });
 }

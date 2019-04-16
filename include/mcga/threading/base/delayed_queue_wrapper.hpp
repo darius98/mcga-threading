@@ -11,12 +11,14 @@ namespace mcga::threading::base {
 
 template<class Processor>
 class DelayedQueueWrapper {
- public:
+  public:
     using Task = typename Processor::Task;
- private:
+
+  private:
     using DelayedTask = DelayedTask<Task>;
     using Clock = typename DelayedTask::Clock;
- public:
+
+  public:
     using DelayedTaskPtr = typename DelayedTask::DelayedTaskPtr;
     using Delay = std::chrono::nanoseconds;
 
@@ -26,10 +28,10 @@ class DelayedQueueWrapper {
 
     DelayedTaskPtr enqueueInterval(Task task, const Delay& delay) {
         return enqueueDelayedTask(
-                DelayedTask::interval(std::move(task), delay));
+          DelayedTask::interval(std::move(task), delay));
     }
 
- protected:
+  protected:
     DelayedTaskPtr enqueueDelayedTask(DelayedTaskPtr delayedTask) {
         std::lock_guard guard(queueLock);
         queue.push(delayedTask);
@@ -70,11 +72,12 @@ class DelayedQueueWrapper {
         return true;
     }
 
- private:
+  private:
     mutable std::mutex queueLock;
     std::priority_queue<DelayedTaskPtr,
                         std::vector<DelayedTaskPtr>,
-                        typename DelayedTask::Compare> queue;
+                        typename DelayedTask::Compare>
+      queue;
 };
 
 }  // namespace mcga::threading::base

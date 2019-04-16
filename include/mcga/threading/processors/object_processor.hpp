@@ -7,33 +7,33 @@ namespace mcga::threading::processors {
 
 template<class... Args>
 class ObjectProcessor {
- public:
+  public:
     using Task = std::tuple<Args...>;
 
-    explicit ObjectProcessor(std::function<void(Args...)> func):
-            func(func) {}
+    explicit ObjectProcessor(std::function<void(Args...)> func): func(func) {
+    }
 
     void executeTask(const Task& task) {
         std::apply(func, task);
     }
 
- private:
+  private:
     std::function<void(Args...)> func;
 };
 
 template<class T>
 class ObjectProcessor<T> {
- public:
+  public:
     using Task = T;
 
-    explicit ObjectProcessor(std::function<void(Task&&)> func):
-            func(func) {}
+    explicit ObjectProcessor(std::function<void(Task&&)> func): func(func) {
+    }
 
     void executeTask(Task&& task) {
         func(std::move(task));
     }
 
- private:
+  private:
     std::function<void(Task&&)> func;
 };
 

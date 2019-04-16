@@ -7,18 +7,19 @@ namespace mcga::threading::processors {
 
 template<class... Args>
 class StatefulFunctionProcessor {
- public:
+  public:
     using Task = void (*)(Args...);
 
-    explicit StatefulFunctionProcessor(Args... args):
-            args(std::forward<Args>(args)...) {}
+    explicit StatefulFunctionProcessor(Args... args)
+            : args(std::forward<Args>(args)...) {
+    }
 
     void executeTask(const Task& task) {
         std::apply(task, args);
     }
 
- private:
+  private:
     std::tuple<Args...> args;
 };
 
-} // namespace mcga::threading::processors
+}  // namespace mcga::threading::processors

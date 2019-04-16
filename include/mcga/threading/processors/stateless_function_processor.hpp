@@ -3,7 +3,7 @@
 namespace mcga::threading::processors {
 
 class StatelessFunctionProcessor {
- public:
+  public:
     using Task = void (*)();
 
     void executeTask(const Task& task) {

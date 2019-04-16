@@ -9,28 +9,28 @@ namespace mcga::threading::base {
 
 template<class W>
 class ThreadWrapper {
- private:
+  private:
     struct InsideThreadPoolT {};
 
     static constexpr InsideThreadPoolT insideThreadPool;
 
- public:
+  public:
     using Wrapped = W;
     using Processor = typename W::Processor;
     using Task = typename W::Task;
 
     explicit ThreadWrapper(InsideThreadPoolT /*unused*/,
                            volatile std::atomic_bool* started,
-                           Processor* processor):
-            processor(processor),
-            ownProcessor(false),
-            started(started),
-            ownStartedFlag(false) {}
+                           Processor* processor)
+            : processor(processor), ownProcessor(false), started(started),
+              ownStartedFlag(false) {
+    }
 
     template<class... Args>
-    explicit ThreadWrapper(Args&&... args):
-            processor(new Processor(std::forward<Args>(args)...)),
-            started(new std::atomic_bool(false)) {}
+    explicit ThreadWrapper(Args&&... args)
+            : processor(new Processor(std::forward<Args>(args)...)),
+              started(new std::atomic_bool(false)) {
+    }
 
     MCGA_THREADING_DISALLOW_COPY_AND_MOVE(ThreadWrapper);
 
@@ -88,12 +88,12 @@ class ThreadWrapper {
         return processor;
     }
 
- protected:
+  protected:
     W* getWorker() {
         return &worker;
     }
 
- private:
+  private:
     void stopRaw() {
         while (isInStartOrStop.test_and_set()) {
             std::this_thread::yield();
@@ -118,7 +118,8 @@ class ThreadWrapper {
     volatile std::atomic_bool* started;
     std::thread workerThread;
 
-template<class T, class I> friend class ThreadPoolWrapper;
+    template<class T, class I>
+    friend class ThreadPoolWrapper;
 };
 
 }  // namespace mcga::threading::base

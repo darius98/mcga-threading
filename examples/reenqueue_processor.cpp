@@ -4,19 +4,19 @@
 
 #include <mcga/threading.hpp>
 
+using mcga::threading::OpaqueEventLoopEnqueuer;
 using mcga::threading::constructs::EventLoopThreadConstruct;
 using mcga::threading::constructs::EventLoopThreadPoolConstruct;
 using mcga::threading::constructs::WorkerThreadConstruct;
-using mcga::threading::OpaqueEventLoopEnqueuer;
 using std::operator""ms;
 using std::cout;
 using std::endl;
-using std::mutex;
 using std::make_unique;
+using std::mutex;
 using std::unique_ptr;
 
 class Processor {
-public:
+  public:
     using Task = unique_ptr<int>;
 
     mutex printMutex;
@@ -40,7 +40,7 @@ int main() {
     cout << "Thread: \n";
 
     loop.start();
-    for (int i = 1; i <= 100; ++ i) {
+    for (int i = 1; i <= 100; ++i) {
         loop.enqueue(make_unique<int>(i));
     }
 
@@ -54,7 +54,7 @@ int main() {
 
     pool.start();
     pool.enqueueDelayed(make_unique<int>(300), 300ms);
-    for (int i = 1; i <= 100; ++ i) {
+    for (int i = 1; i <= 100; ++i) {
         pool.enqueue(make_unique<int>(i));
     }
 
@@ -62,7 +62,7 @@ int main() {
 
     pool.stop();
 
-//    OwnWorkerThread worker; <- DOESN'T COMPILE!
+    //    OwnWorkerThread worker; <- DOESN'T COMPILE!
 
     return 0;
 }

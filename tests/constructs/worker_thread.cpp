@@ -39,28 +39,31 @@ TEST_CASE(Worker, "Worker") {
     });
 
     multiRunTest(TestConfig("Enqueueing executables from different threads")
-                 .setTimeTicksLimit(10), 10, [&] {
-        constexpr int task = 1;
-        constexpr int numWorkers = 100;
-        constexpr int numWorkerJobs = 100000;
+                   .setTimeTicksLimit(10),
+                 10,
+                 [&] {
+                     constexpr int task = 1;
+                     constexpr int numWorkers = 100;
+                     constexpr int numWorkerJobs = 100000;
 
-        vector<thread*> workers(numWorkers, nullptr);
-        for (int i = 0; i < numWorkers; ++ i) {
-            workers[i] = new thread([&] {
-                for (int j = 0; j < numWorkerJobs; ++ j) {
-                    worker->enqueue(task);
-                }
-            });
-        }
-        for (int i = 0; i < numWorkers; ++ i) {
-            workers[i]->join();
-            delete workers[i];
-        }
-        while (TestingProcessor::numProcessed() < numWorkers * numWorkerJobs) {
-            this_thread::sleep_for(1ms);
-        }
-        this_thread::sleep_for(100ms);
-        expect(TestingProcessor::numProcessed(),
-               isEqualTo(numWorkers * numWorkerJobs));
-    });
+                     vector<thread*> workers(numWorkers, nullptr);
+                     for (int i = 0; i < numWorkers; ++i) {
+                         workers[i] = new thread([&] {
+                             for (int j = 0; j < numWorkerJobs; ++j) {
+                                 worker->enqueue(task);
+                             }
+                         });
+                     }
+                     for (int i = 0; i < numWorkers; ++i) {
+                         workers[i]->join();
+                         delete workers[i];
+                     }
+                     while (TestingProcessor::numProcessed()
+                            < numWorkers * numWorkerJobs) {
+                         this_thread::sleep_for(1ms);
+                     }
+                     this_thread::sleep_for(100ms);
+                     expect(TestingProcessor::numProcessed(),
+                            isEqualTo(numWorkers * numWorkerJobs));
+                 });
 }

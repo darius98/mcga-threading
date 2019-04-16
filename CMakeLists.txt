@@ -14,9 +14,9 @@ include(FindThreads)
 
 add_library(mcga_threading INTERFACE)
 target_include_directories(mcga_threading
-    INTERFACE third_party/concurrentqueue
-    INTERFACE include
-)
+        INTERFACE third_party/concurrentqueue
+        INTERFACE include
+        )
 target_link_libraries(mcga_threading INTERFACE ${CMAKE_THREAD_LIBS_INIT})
 
 install(DIRECTORY include DESTINATION ..)
@@ -24,23 +24,23 @@ install(FILES third_party/concurrentqueue/concurrentqueue.h
         DESTINATION include/concurrentqueue.h)
 
 if (MCGA_threading_tests)
-    function (add_kktest TEST_NAME)
+    function(add_kktest TEST_NAME)
         add_executable(${TEST_NAME}_test ${ARGN})
-    endfunction ()
+    endfunction()
 
     add_executable(mcga_threading_test
-        tests/constructs/event_loop_thread.cpp
-        tests/constructs/event_loop_thread_pool.cpp
-        tests/base/thread_pool_wrapper.cpp
-        tests/base/thread_wrapper.cpp
-        tests/constructs/worker_thread.cpp
-        tests/constructs/worker_thread_pool.cpp
-    )
+            tests/constructs/event_loop_thread.cpp
+            tests/constructs/event_loop_thread_pool.cpp
+            tests/base/thread_pool_wrapper.cpp
+            tests/base/thread_wrapper.cpp
+            tests/constructs/worker_thread.cpp
+            tests/constructs/worker_thread_pool.cpp
+            )
     target_link_libraries(mcga_threading_test kktest mcga_threading)
 endif ()
 
 if (MCGA_threading_benchmarks)
-    function (add_benchmark BENCHMARK_NAME)
+    function(add_benchmark BENCHMARK_NAME)
         set(BENCHMARK_TARGET mcga_threading_${BENCHMARK_NAME}_benchmark)
         add_executable(${BENCHMARK_TARGET} ${ARGN})
         target_link_libraries(${BENCHMARK_TARGET} mcga_threading)
@@ -50,7 +50,7 @@ if (MCGA_threading_benchmarks)
             target_include_directories(${BENCHMARK_TARGET} PUBLIC /usr/local/include)
             target_link_libraries(${BENCHMARK_TARGET} evpp_static event glog)
         endif ()
-    endfunction ()
+    endfunction()
 
     add_benchmark(event_loop_delay_error benchmarks/event_loop_delay_error.cpp)
     add_benchmark(simple_function benchmarks/simple_function.cpp)
@@ -58,10 +58,10 @@ if (MCGA_threading_benchmarks)
 endif ()
 
 if (MCGA_threading_examples)
-    function (add_example example_name)
+    function(add_example example_name)
         add_executable(mcga_threading_${example_name}_example examples/${example_name}.cpp)
         target_link_libraries(mcga_threading_${example_name}_example PUBLIC mcga_threading)
-    endfunction ()
+    endfunction()
 
     add_example(intervals)
     add_example(move_only_object_processor)

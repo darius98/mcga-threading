@@ -58,29 +58,31 @@ TEST_CASE(ThreadWrapper, "ThreadWrapper") {
 
     multiRunTest(TestConfig("Concurrent starts and stops do not break the "
                             "ThreadWrapper")
-                 .setTimeTicksLimit(10), 10, [&] {
-        constexpr int numWorkers = 100;
-        constexpr int numOps = 1000;
+                   .setTimeTicksLimit(10),
+                 10,
+                 [&] {
+                     constexpr int numWorkers = 100;
+                     constexpr int numOps = 1000;
 
-        auto loop = new ThreadWrapper<BasicWorker>();
+                     auto loop = new ThreadWrapper<BasicWorker>();
 
-        vector<thread*> workers(numWorkers, nullptr);
-        for (int i = 0; i < numWorkers; ++ i) {
-            workers[i] = new thread([&] {
-                for (int j = 0; j < numOps; ++ j) {
-                    if (randomBool()) {
-                        loop->start();
-                    } else {
-                        loop->stop();
-                    }
-                }
-            });
-        }
-        for (int i = 0; i < numWorkers; ++ i) {
-            workers[i]->join();
-            delete workers[i];
-        }
+                     vector<thread*> workers(numWorkers, nullptr);
+                     for (int i = 0; i < numWorkers; ++i) {
+                         workers[i] = new thread([&] {
+                             for (int j = 0; j < numOps; ++j) {
+                                 if (randomBool()) {
+                                     loop->start();
+                                 } else {
+                                     loop->stop();
+                                 }
+                             }
+                         });
+                     }
+                     for (int i = 0; i < numWorkers; ++i) {
+                         workers[i]->join();
+                         delete workers[i];
+                     }
 
-        delete loop;
-    });
+                     delete loop;
+                 });
 }

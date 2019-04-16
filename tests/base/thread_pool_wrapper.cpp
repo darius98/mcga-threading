@@ -59,29 +59,33 @@ TEST_CASE(ThreadPoolWrapper, "ThreadPoolWrapper") {
 
     multiRunTest(TestConfig("Concurrent starts and stops do not break the "
                             "ThreadPoolWrapper")
-                 .setTimeTicksLimit(10), 10, [&] {
-        constexpr int numWorkers = 100;
-        constexpr int numOps = 100;
+                   .setTimeTicksLimit(10),
+                 10,
+                 [&] {
+                     constexpr int numWorkers = 100;
+                     constexpr int numOps = 100;
 
-        auto loop = new ThreadPoolWrapper<BasicWorker, std::atomic_size_t>(8ul);
+                     auto loop
+                       = new ThreadPoolWrapper<BasicWorker, std::atomic_size_t>(
+                         8ul);
 
-        vector<thread*> workers(numWorkers, nullptr);
-        for (int i = 0; i < numWorkers; ++ i) {
-            workers[i] = new thread([&] {
-                for (int j = 0; j < numOps; ++ j) {
-                    if (randomBool()) {
-                        loop->start();
-                    } else {
-                        loop->stop();
-                    }
-                }
-            });
-        }
-        for (int i = 0; i < numWorkers; ++ i) {
-            workers[i]->join();
-            delete workers[i];
-        }
+                     vector<thread*> workers(numWorkers, nullptr);
+                     for (int i = 0; i < numWorkers; ++i) {
+                         workers[i] = new thread([&] {
+                             for (int j = 0; j < numOps; ++j) {
+                                 if (randomBool()) {
+                                     loop->start();
+                                 } else {
+                                     loop->stop();
+                                 }
+                             }
+                         });
+                     }
+                     for (int i = 0; i < numWorkers; ++i) {
+                         workers[i]->join();
+                         delete workers[i];
+                     }
 
-        delete loop;
-    });
+                     delete loop;
+                 });
 }

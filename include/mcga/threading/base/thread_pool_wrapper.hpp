@@ -10,14 +10,15 @@ namespace mcga::threading::base {
 
 template<class W, class Idx>
 class ThreadPoolWrapper {
- private:
+  private:
     using Thread = ThreadWrapper<W>;
 
- public:
+  public:
     struct NumThreads {
         std::size_t numThreads;
 
-        explicit NumThreads(std::size_t numThreads): numThreads(numThreads) {}
+        explicit NumThreads(std::size_t numThreads): numThreads(numThreads) {
+        }
     };
 
     using Wrapped = W;
@@ -25,22 +26,22 @@ class ThreadPoolWrapper {
     using Task = typename W::Task;
 
     template<class... Args>
-    explicit ThreadPoolWrapper(NumThreads numThreads, Args&&... args):
-            processor(std::forward<Args>(args)...) {
+    explicit ThreadPoolWrapper(NumThreads numThreads, Args&&... args)
+            : processor(std::forward<Args>(args)...) {
         threads.reserve(numThreads.numThreads);
         for (int i = 0; i < numThreads.numThreads; i += 1) {
             threads.push_back(
-                new Thread(Thread::insideThreadPool, &started, &processor));
+              new Thread(Thread::insideThreadPool, &started, &processor));
         }
     }
 
     template<class... Args>
-    explicit ThreadPoolWrapper(Args&&... args):
-            processor(std::forward<Args>(args)...) {
+    explicit ThreadPoolWrapper(Args&&... args)
+            : processor(std::forward<Args>(args)...) {
         threads.reserve(std::thread::hardware_concurrency());
         for (int i = 0; i < std::thread::hardware_concurrency(); i += 1) {
             threads.push_back(
-                new Thread(Thread::insideThreadPool, &started, &processor));
+              new Thread(Thread::insideThreadPool, &started, &processor));
         }
     }
 
@@ -87,12 +88,12 @@ class ThreadPoolWrapper {
         return processor;
     }
 
- protected:
+  protected:
     Wrapped* getWorker() {
         return threads[(++currentThreadId) % threads.size()]->getWorker();
     }
 
- private:
+  private:
     void stopRaw() {
         while (isInStartOrStop.test_and_set()) {
             std::this_thread::yield();
