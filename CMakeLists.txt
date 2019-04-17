@@ -24,7 +24,7 @@ install(FILES third_party/concurrentqueue/concurrentqueue.h
         DESTINATION include/concurrentqueue.h)
 
 if (MCGA_threading_tests)
-    function(add_kktest TEST_NAME)
+    function(add_mcga_test TEST_NAME)
         add_executable(${TEST_NAME}_test ${ARGN})
     endfunction()
 
@@ -36,7 +36,7 @@ if (MCGA_threading_tests)
             tests/constructs/worker_thread.cpp
             tests/constructs/worker_thread_pool.cpp
             )
-    target_link_libraries(mcga_threading_test kktest mcga_threading)
+    target_link_libraries(mcga_threading_test mcga_test mcga_threading)
 endif ()
 
 if (MCGA_threading_benchmarks)
