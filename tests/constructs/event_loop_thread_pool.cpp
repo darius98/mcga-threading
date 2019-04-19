@@ -4,7 +4,7 @@
 #include <set>
 #include <vector>
 
-#include <mcga/matchers.hpp>
+#include <mcga/test_ext/matchers.hpp>
 #include <mcga/test.hpp>
 
 #include <mcga/threading.hpp>

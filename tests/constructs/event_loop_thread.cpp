@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include <mcga/matchers.hpp>
+#include <mcga/test_ext/matchers.hpp>
 #include <mcga/test.hpp>
 
 #include <mcga/threading/base/event_loop.hpp>
