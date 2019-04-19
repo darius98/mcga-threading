@@ -2,21 +2,20 @@
 
 #include <vector>
 
+#include <mcga/matchers.hpp>
 #include <mcga/test.hpp>
-#include <mcga/test_ext/matchers.hpp>
 
 #include <mcga/threading.hpp>
 
 #include "../testing_utils/rand_utils.hpp"
 
+using mcga::matchers::isFalse;
+using mcga::matchers::isTrue;
+using mcga::test::expect;
 using mcga::test::multiRunTest;
 using mcga::test::test;
 using mcga::test::TestConfig;
-using mcga::test::matchers::expect;
-using mcga::test::matchers::isFalse;
-using mcga::test::matchers::isTrue;
 using mcga::threading::base::ThreadPoolWrapper;
-using mcga::threading::base::ThreadWrapper;
 using mcga::threading::testing::randomBool;
 using std::atomic_bool;
 using std::operator""ns;

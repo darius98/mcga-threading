@@ -4,21 +4,22 @@
 #include <set>
 #include <vector>
 
+#include <mcga/matchers.hpp>
 #include <mcga/test.hpp>
-#include <mcga/test_ext/matchers.hpp>
 
 #include <mcga/threading/base/worker.hpp>
 #include <mcga/threading/constructs.hpp>
 
 #include "../testing_utils/basic_processor.hpp"
 
+using mcga::matchers::eachElement;
+using mcga::matchers::hasSize;
+using mcga::matchers::isEqualTo;
+using mcga::matchers::isNotEqualTo;
+using mcga::test::expect;
 using mcga::test::multiRunTest;
 using mcga::test::setUp;
 using mcga::test::tearDown;
-using mcga::test::matchers::eachElement;
-using mcga::test::matchers::hasSize;
-using mcga::test::matchers::isEqualTo;
-using mcga::test::matchers::isNotEqualTo;
 using mcga::threading::constructs::WorkerThreadPoolConstruct;
 using mcga::threading::testing::BasicProcessor;
 using std::atomic_int;

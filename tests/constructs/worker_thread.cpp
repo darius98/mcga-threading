@@ -2,18 +2,19 @@
 
 #include <vector>
 
+#include <mcga/matchers.hpp>
 #include <mcga/test.hpp>
-#include <mcga/test_ext/matchers.hpp>
 
 #include <mcga/threading/constructs.hpp>
 
 #include "../testing_utils/basic_processor.hpp"
 
+using mcga::matchers::isEqualTo;
+using mcga::test::expect;
 using mcga::test::multiRunTest;
 using mcga::test::setUp;
 using mcga::test::tearDown;
 using mcga::test::TestConfig;
-using mcga::test::matchers::isEqualTo;
 using mcga::threading::constructs::WorkerThreadConstruct;
 using mcga::threading::testing::BasicProcessor;
 using std::operator""ms;

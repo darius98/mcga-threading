@@ -2,8 +2,8 @@
 
 #include <algorithm>
 
+#include <mcga/matchers.hpp>
 #include <mcga/test.hpp>
-#include <mcga/test_ext/matchers.hpp>
 
 #include <mcga/threading/base/event_loop.hpp>
 #include <mcga/threading/constructs.hpp>
@@ -11,18 +11,18 @@
 #include "../testing_utils/basic_processor.hpp"
 #include "../testing_utils/rand_utils.hpp"
 
+using mcga::matchers::anyElement;
+using mcga::matchers::eachElement;
+using mcga::matchers::hasSize;
+using mcga::matchers::isEqualTo;
+using mcga::matchers::isGreaterThanEqual;
+using mcga::matchers::isNotEqualTo;
+using mcga::matchers::isZero;
+using mcga::test::expect;
 using mcga::test::setUp;
 using mcga::test::tearDown;
 using mcga::test::test;
 using mcga::test::TestConfig;
-using mcga::test::matchers::anyElement;
-using mcga::test::matchers::eachElement;
-using mcga::test::matchers::expect;
-using mcga::test::matchers::hasSize;
-using mcga::test::matchers::isEqualTo;
-using mcga::test::matchers::isGreaterThanEqual;
-using mcga::test::matchers::isNotEqualTo;
-using mcga::test::matchers::isZero;
 using mcga::threading::base::EventLoop;
 using mcga::threading::constructs::EventLoopThreadConstruct;
 using mcga::threading::testing::BasicProcessor;
