@@ -22,13 +22,13 @@ class ThreadWrapper {
     explicit ThreadWrapper(InsideThreadPoolT /*unused*/,
                            volatile std::atomic_bool* started,
                            Processor* processor)
-            : processor(processor), ownProcessor(false), started(started),
-              ownStartedFlag(false) {
+            : insidePool(true), processor(processor), started(started) {
     }
 
     template<class... Args>
     explicit ThreadWrapper(Args&&... args)
-            : processor(new Processor(std::forward<Args>(args)...)),
+            : insidePool(false),
+              processor(new Processor(std::forward<Args>(args)...)),
               started(new std::atomic_bool(false)) {
     }
 
@@ -36,10 +36,8 @@ class ThreadWrapper {
 
     ~ThreadWrapper() {
         stopRaw();
-        if (ownStartedFlag) {
+        if (!insidePool) {
             delete started;
-        }
-        if (ownProcessor) {
             delete processor;
         }
     }
@@ -56,7 +54,7 @@ class ThreadWrapper {
         while (isInStartOrStop.test_and_set()) {
             std::this_thread::yield();
         }
-        if (ownStartedFlag) {
+        if (!insidePool) {
             if (!started->load()) {
                 workerThread = std::thread([this]() {
                     started->store(true);
@@ -67,12 +65,12 @@ class ThreadWrapper {
                 }
             }
         } else {
-            std::atomic_bool localStarted = false;
+            volatile bool localStarted = false;
             workerThread = std::thread([this, &localStarted]() {
-                localStarted.store(true);
+                localStarted = true;
                 worker.start(started, processor);
             });
-            while (!localStarted.load()) {
+            while (!localStarted) {
                 std::this_thread::yield();
             }
         }
@@ -98,7 +96,7 @@ class ThreadWrapper {
         while (isInStartOrStop.test_and_set()) {
             std::this_thread::yield();
         }
-        if (ownStartedFlag) {
+        if (!insidePool) {
             started->store(false);
         }
         if (workerThread.joinable()) {
@@ -109,12 +107,12 @@ class ThreadWrapper {
         }
     }
 
-    W worker;
-    bool ownProcessor = true;
+    bool insidePool;
+
+    Wrapped worker;
     Processor* processor;
 
     std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
-    bool ownStartedFlag = true;
     volatile std::atomic_bool* started;
     std::thread workerThread;
 

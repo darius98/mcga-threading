@@ -2,7 +2,7 @@
 
 #include <concurrentqueue.h>
 
-#include <mcga/threading/base/execute_task_variants.hpp>
+#include <mcga/threading/base/method_checks.hpp>
 
 namespace mcga::threading::base {
 
@@ -32,7 +32,12 @@ class ImmediateQueueWrapper {
         queueBufferSize = queue.try_dequeue_bulk(
           queueToken, queueBuffer.begin(), queueBuffer.size());
         for (size_t i = 0; queueBufferSize > 0; --queueBufferSize, ++i) {
-            executeTask(std::move(queueBuffer[i]), processor, enqueuer);
+            if constexpr (hasExecuteTaskWithEnqueuer<Processor,
+                                                              Enqueuer>) {
+                processor->executeTask(queueBuffer[i], enqueuer);
+            } else {
+                processor->executeTask(queueBuffer[i]);
+            }
         }
         return true;
     }
@@ -41,7 +46,7 @@ class ImmediateQueueWrapper {
     moodycamel::ConcurrentQueue<Task> queue;
     moodycamel::ConsumerToken queueToken{queue};
     std::vector<Task> queueBuffer;
-    std::size_t queueBufferSize = 0;
+    volatile std::size_t queueBufferSize = 0;
 };
 
 }  // namespace mcga::threading::base

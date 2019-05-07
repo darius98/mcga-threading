@@ -5,7 +5,7 @@
 #include <mutex>
 
 #include <mcga/threading/base/delayed_task.hpp>
-#include <mcga/threading/base/execute_task_variants.hpp>
+#include <mcga/threading/base/method_checks.hpp>
 
 namespace mcga::threading::base {
 
@@ -63,7 +63,11 @@ class DelayedQueueWrapper {
             return false;
         }
         if (!delayedTask->isCancelled()) {
-            executeTask(std::move(delayedTask->task), processor, enqueuer);
+            if constexpr (hasExecuteTaskWithEnqueuer<Processor, Enqueuer>) {
+                processor->executeTask(delayedTask->task, enqueuer);
+            } else {
+                processor->executeTask(delayedTask->task);
+            }
         }
         if (!delayedTask->isCancelled() && delayedTask->isInterval()) {
             delayedTask->setTimePoint();

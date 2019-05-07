@@ -4,10 +4,9 @@
 
 #include <mcga/threading.hpp>
 
-using mcga::threading::OpaqueEventLoopEnqueuer;
+using mcga::threading::Enqueuer;
 using mcga::threading::constructs::EventLoopThreadConstruct;
 using mcga::threading::constructs::EventLoopThreadPoolConstruct;
-using mcga::threading::constructs::WorkerThreadConstruct;
 using std::operator""ms;
 using std::cout;
 using std::endl;
@@ -21,7 +20,7 @@ class Processor {
 
     mutex printMutex;
 
-    void executeTask(Task task, OpaqueEventLoopEnqueuer<Task>* enqueuer) {
+    void executeTask(const Task& task, Enqueuer<Processor>* enqueuer) {
         if (*task <= 100) {
             enqueuer->enqueueDelayed(make_unique<int>(300 + *task), 300ms);
         }

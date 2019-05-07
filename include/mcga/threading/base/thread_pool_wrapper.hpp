@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <memory>
 #include <thread>
 
 #include <mcga/threading/base/disallow_copy_and_move.hpp>
@@ -30,33 +31,26 @@ class ThreadPoolWrapper {
             : processor(std::forward<Args>(args)...) {
         threads.reserve(numThreads.numThreads);
         for (int i = 0; i < numThreads.numThreads; i += 1) {
-            threads.push_back(
-              new Thread(Thread::insideThreadPool, &started, &processor));
+            threads.push_back(std::make_unique<Thread>(
+              Thread::insideThreadPool, &started, &processor));
         }
     }
 
     template<class... Args>
     explicit ThreadPoolWrapper(Args&&... args)
-            : processor(std::forward<Args>(args)...) {
-        threads.reserve(std::thread::hardware_concurrency());
-        for (int i = 0; i < std::thread::hardware_concurrency(); i += 1) {
-            threads.push_back(
-              new Thread(Thread::insideThreadPool, &started, &processor));
-        }
+            : ThreadPoolWrapper(NumThreads(std::thread::hardware_concurrency()),
+                                std::forward<Args>(args)...) {
     }
 
     MCGA_THREADING_DISALLOW_COPY_AND_MOVE(ThreadPoolWrapper);
 
     ~ThreadPoolWrapper() {
         stopRaw();
-        for (Thread* thread: threads) {
-            delete thread;
-        }
     }
 
     std::size_t sizeApprox() const {
         std::size_t size = 0;
-        for (const Thread* thread: threads) {
+        for (const std::unique_ptr<Thread>& thread: threads) {
             size += thread->sizeApprox();
         }
         return size;
@@ -72,7 +66,7 @@ class ThreadPoolWrapper {
         }
         if (!started.load()) {
             started.store(true);
-            for (Thread* thread: threads) {
+            for (std::unique_ptr<Thread>& thread: threads) {
                 thread->start();
             }
         }
@@ -100,7 +94,7 @@ class ThreadPoolWrapper {
         }
         if (started.load()) {
             started.store(false);
-            for (Thread* thread: threads) {
+            for (std::unique_ptr<Thread>& thread: threads) {
                 thread->stop();
             }
         }
@@ -110,7 +104,7 @@ class ThreadPoolWrapper {
     Idx currentThreadId = 0;
     std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
     volatile std::atomic_bool started = false;
-    std::vector<Thread*> threads;
+    std::vector<std::unique_ptr<Thread>> threads;
 };
 
 }  // namespace mcga::threading::base

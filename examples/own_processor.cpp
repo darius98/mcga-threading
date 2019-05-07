@@ -19,7 +19,7 @@ class Processor {
 
     mutex printMutex;
 
-    void executeTask(Task task) {
+    void executeTask(const Task& task) {
         std::lock_guard guard(printMutex);
         cout << "Processing " << *task << " on thread "
              << std::hash<std::thread::id>()(std::this_thread::get_id())

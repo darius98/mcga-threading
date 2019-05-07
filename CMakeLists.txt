@@ -33,8 +33,6 @@ if (MCGA_threading_tests)
             tests/constructs/event_loop_thread_pool.cpp
             tests/base/thread_pool_wrapper.cpp
             tests/base/thread_wrapper.cpp
-            tests/constructs/worker_thread.cpp
-            tests/constructs/worker_thread_pool.cpp
             )
     target_link_libraries(mcga_threading_test mcga_test mcga_threading)
 endif ()

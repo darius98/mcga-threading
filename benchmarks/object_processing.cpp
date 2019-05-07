@@ -19,10 +19,6 @@ using mcga::threading::EventLoopThread;
 using mcga::threading::EventLoopThreadPool;
 using mcga::threading::ObjectEventLoopThread;
 using mcga::threading::ObjectEventLoopThreadPool;
-using mcga::threading::ObjectWorkerThread;
-using mcga::threading::ObjectWorkerThreadPool;
-using mcga::threading::WorkerThread;
-using mcga::threading::WorkerThreadPool;
 using std::atomic_int;
 using std::cout;
 using std::false_type;
@@ -98,15 +94,9 @@ nanoseconds sampleDuration(int numSamples, Thread& th) {
             th.loop()->QueueInLoop([i] { task(i); });
         } else
 #endif
-          if constexpr (
-            std::is_base_of_v<
-              EventLoopThreadPool,
-              Thread> || std::is_base_of_v<WorkerThreadPool, Thread>) {
+          if constexpr (std::is_base_of_v<EventLoopThreadPool, Thread>) {
             th.enqueue([i] { atomicTask(i); });
-        } else if constexpr (
-          std::is_base_of_v<
-            EventLoopThread,
-            Thread> || std::is_base_of_v<WorkerThread, Thread>) {
+        } else if constexpr (std::is_base_of_v<EventLoopThread, Thread>) {
             th.enqueue([i] { task(i); });
         } else {
             th.enqueue(i);
@@ -158,17 +148,11 @@ nanoseconds sampleDurationCapture(int numSamples,
             });
         } else
 #endif
-          if constexpr (
-            std::is_base_of_v<
-              EventLoopThreadPool,
-              Thread> || std::is_base_of_v<WorkerThreadPool, Thread>) {
+          if constexpr (std::is_base_of_v<EventLoopThreadPool, Thread>) {
             th.enqueue([i, &capture1, &capture2, &capture3] {
                 atomicCaptureTask(i, capture1, capture2, capture3);
             });
-        } else if constexpr (
-          std::is_base_of_v<
-            EventLoopThread,
-            Thread> || std::is_base_of_v<WorkerThread, Thread>) {
+        } else if constexpr (std::is_base_of_v<EventLoopThread, Thread>) {
             th.enqueue([i, &capture1, &capture2, &capture3] {
                 captureTask(i, capture1, capture2, capture3);
             });
@@ -221,12 +205,12 @@ nanoseconds sampleDurationTriple(int numSamples, Thread& th) {
           if constexpr (
             std::is_base_of_v<
               EventLoopThreadPool,
-              Thread> || std::is_base_of_v<WorkerThreadPool, Thread>) {
+              Thread> ) {
             th.enqueue([i, j = 3 * i, &d] { tripleAtomicTask(i, j, &d); });
         } else if constexpr (
           std::is_base_of_v<
             EventLoopThread,
-            Thread> || std::is_base_of_v<WorkerThread, Thread>) {
+            Thread> ) {
             th.enqueue([i, j = 3 * i, &d] { tripleTask(i, j, &d); });
         } else {
             th.enqueue({i, 3 * i, &d});
@@ -286,14 +270,14 @@ nanoseconds sampleDurationTripleCapture(int numSamples,
           if constexpr (
             std::is_base_of_v<
               EventLoopThreadPool,
-              Thread> || std::is_base_of_v<WorkerThreadPool, Thread>) {
+              Thread>) {
             th.enqueue([i, j = 3 * i, &d, &capture1, &capture2, &capture3] {
                 atomicTripleTaskCapture(i, j, &d, capture1, capture2, capture3);
             });
         } else if constexpr (
           std::is_base_of_v<
             EventLoopThread,
-            Thread> || std::is_base_of_v<WorkerThread, Thread>) {
+            Thread>) {
             th.enqueue([i, j = 3 * i, &d, &capture1, &capture2, &capture3] {
                 tripleTaskCapture(i, j, &d, capture1, capture2, capture3);
             });
@@ -331,7 +315,6 @@ int main(int argc, char** argv) {
     evpp::EventLoopThread evppEventLoop4;
 #endif
     EventLoopThread eventLoop;
-    WorkerThread worker;
 
 #ifdef LINK_EVPP
     evpp::EventLoopThreadPool evppEventLoopPool1(
@@ -344,12 +327,9 @@ int main(int argc, char** argv) {
       nullptr, std::thread::hardware_concurrency());
 #endif
     EventLoopThreadPool eventLoopPool;
-    WorkerThreadPool workerPool;
 
     ObjectEventLoopThread<int> objectEventLoop(task);
     ObjectEventLoopThreadPool<int> objectEventLoopPool(atomicTask);
-    ObjectWorkerThread<int> objectWorker(task);
-    ObjectWorkerThreadPool<int> objectWorkerPool(atomicTask);
 
     cout << "No state, single object (" << numSamples << " samples):\n";
 #ifdef LINK_EVPP
@@ -358,12 +338,8 @@ int main(int argc, char** argv) {
 #endif
     cout << "\tEventLoop:              "
          << sampleDuration(numSamples, eventLoop) << "\n";
-    cout << "\tWorker:                 " << sampleDuration(numSamples, worker)
-         << "\n";
     cout << "\tObjectEventLoop:        "
          << sampleDuration(numSamples, objectEventLoop) << "\n";
-    cout << "\tObjectWorker:           "
-         << sampleDuration(numSamples, objectWorker) << "\n";
     cout << "\n";
 #ifdef LINK_EVPP
     cout << "\tEVPP EventLoopPool:     "
@@ -371,12 +347,8 @@ int main(int argc, char** argv) {
 #endif
     cout << "\tEventLoopPool:          "
          << sampleDuration(numSamples, eventLoopPool) << "\n";
-    cout << "\tWorkerPool:             "
-         << sampleDuration(numSamples, workerPool) << "\n";
     cout << "\tObjectEventLoopPool:    "
          << sampleDuration(numSamples, objectEventLoopPool) << "\n";
-    cout << "\tObjectWorkerPool:       "
-         << sampleDuration(numSamples, objectWorkerPool) << "\n";
 
     cout << "\n\n";
 
@@ -389,14 +361,6 @@ int main(int argc, char** argv) {
           captureTask(obj, capture1, capture2, capture3);
       });
     ObjectEventLoopThreadPool<int> captureObjectEventLoopPool(
-      [&capture1, &capture2, &capture3](int obj) {
-          atomicCaptureTask(obj, capture1, capture2, capture3);
-      });
-    ObjectWorkerThread<int> captureObjectWorker(
-      [&capture1, &capture2, &capture3](int obj) {
-          captureTask(obj, capture1, capture2, capture3);
-      });
-    ObjectWorkerThreadPool<int> captureObjectWorkerPool(
       [&capture1, &capture2, &capture3](int obj) {
           atomicCaptureTask(obj, capture1, capture2, capture3);
       });
@@ -413,17 +377,9 @@ int main(int argc, char** argv) {
          << sampleDurationCapture(
               numSamples, eventLoop, capture1, capture2, capture3)
          << "\n";
-    cout << "\tWorker:                 "
-         << sampleDurationCapture(
-              numSamples, worker, capture1, capture2, capture3)
-         << "\n";
     cout << "\tObjectEventLoop:        "
          << sampleDurationCapture(
               numSamples, objectEventLoop, capture1, capture2, capture3)
-         << "\n";
-    cout << "\tObjectWorker:           "
-         << sampleDurationCapture(
-              numSamples, objectWorker, capture1, capture2, capture3)
          << "\n";
     cout << "\n";
 #ifdef LINK_EVPP
@@ -436,17 +392,9 @@ int main(int argc, char** argv) {
          << sampleDurationCapture(
               numSamples, eventLoopPool, capture1, capture2, capture3)
          << "\n";
-    cout << "\tWorkerPool:             "
-         << sampleDurationCapture(
-              numSamples, workerPool, capture1, capture2, capture3)
-         << "\n";
     cout << "\tObjectEventLoopPool:    "
          << sampleDurationCapture(
               numSamples, objectEventLoopPool, capture1, capture2, capture3)
-         << "\n";
-    cout << "\tObjectWorkerPool:       "
-         << sampleDurationCapture(
-              numSamples, objectWorkerPool, capture1, capture2, capture3)
          << "\n";
 
     cout << "\n\n";
@@ -455,9 +403,6 @@ int main(int argc, char** argv) {
       tripleTask);
     ObjectEventLoopThreadPool<int, int, const double*>
       tripleObjectEventLoopPool(tripleAtomicTask);
-    ObjectWorkerThread<int, int, const double*> tripleObjectWorker(tripleTask);
-    ObjectWorkerThreadPool<int, int, const double*> tripleObjectWorkerPool(
-      tripleAtomicTask);
 
     cout << "No state, 3 objects (" << numSamples << " samples):\n";
 #ifdef LINK_EVPP
@@ -466,12 +411,8 @@ int main(int argc, char** argv) {
 #endif
     cout << "\tEventLoop:              "
          << sampleDurationTriple(numSamples, eventLoop) << "\n";
-    cout << "\tWorker:                 "
-         << sampleDurationTriple(numSamples, worker) << "\n";
     cout << "\tObjectEventLoop:        "
          << sampleDurationTriple(numSamples, tripleObjectEventLoop) << "\n";
-    cout << "\tObjectWorker:           "
-         << sampleDurationTriple(numSamples, tripleObjectWorker) << "\n";
     cout << "\n";
 #ifdef LINK_EVPP
     cout << "\tEVPP EventLoopPool:     "
@@ -479,12 +420,8 @@ int main(int argc, char** argv) {
 #endif
     cout << "\tEventLoopPool:          "
          << sampleDurationTriple(numSamples, eventLoopPool) << "\n";
-    cout << "\tWorkerPool:             "
-         << sampleDurationTriple(numSamples, workerPool) << "\n";
     cout << "\tObjectEventLoopPool:    "
          << sampleDurationTriple(numSamples, tripleObjectEventLoopPool) << "\n";
-    cout << "\tObjectWorkerPool:       "
-         << sampleDurationTriple(numSamples, tripleObjectWorkerPool) << "\n";
 
     cout << "\n\n";
 
@@ -500,17 +437,6 @@ int main(int argc, char** argv) {
             atomicTripleTaskCapture(
               obj1, obj2, obj3, capture1, capture2, capture3);
         });
-    ObjectWorkerThread<int, int, const double*> tripleObjectCaptureWorker(
-      [&capture1, &capture2, &capture3](
-        int obj1, int obj2, const double* obj3) {
-          tripleTaskCapture(obj1, obj2, obj3, capture1, capture2, capture3);
-      });
-    ObjectWorkerThreadPool<int, int, const double*>
-      tripleObjectCaptureWorkerPool([&capture1, &capture2, &capture3](
-                                      int obj1, int obj2, const double* obj3) {
-          atomicTripleTaskCapture(
-            obj1, obj2, obj3, capture1, capture2, capture3);
-      });
 
     cout << "With state (3x reference capture), 3 objects (" << numSamples
          << " samples):\n";
@@ -524,20 +450,9 @@ int main(int argc, char** argv) {
          << sampleDurationTripleCapture(
               numSamples, eventLoop, capture1, capture2, capture3)
          << "\n";
-    cout << "\tWorker:                 "
-         << sampleDurationTripleCapture(
-              numSamples, worker, capture1, capture2, capture3)
-         << "\n";
     cout << "\tObjectEventLoop:        "
          << sampleDurationTripleCapture(numSamples,
                                         tripleObjectCaptureEventLoop,
-                                        capture1,
-                                        capture2,
-                                        capture3)
-         << "\n";
-    cout << "\tObjectWorker:           "
-         << sampleDurationTripleCapture(numSamples,
-                                        tripleObjectCaptureWorker,
                                         capture1,
                                         capture2,
                                         capture3)
@@ -553,20 +468,9 @@ int main(int argc, char** argv) {
          << sampleDurationTripleCapture(
               numSamples, eventLoopPool, capture1, capture2, capture3)
          << "\n";
-    cout << "\tWorkerPool:             "
-         << sampleDurationTripleCapture(
-              numSamples, workerPool, capture1, capture2, capture3)
-         << "\n";
     cout << "\tObjectEventLoopPool:    "
          << sampleDurationTripleCapture(numSamples,
                                         tripleObjectCaptureEventLoopPool,
-                                        capture1,
-                                        capture2,
-                                        capture3)
-         << "\n";
-    cout << "\tObjectWorkerPool:       "
-         << sampleDurationTripleCapture(numSamples,
-                                        tripleObjectCaptureWorkerPool,
                                         capture1,
                                         capture2,
                                         capture3)
