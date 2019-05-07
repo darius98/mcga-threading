@@ -149,9 +149,9 @@ int main(int argc, char** argv) {
          << sampleDuration(numSamples, task, eventLoop) << "\n";
     cout << "\tStatelessEventLoop:                   "
          << sampleDuration(numSamples, task, statelessEventLoop) << "\n";
-    cout << "\tSPEventLoop:              "
+    cout << "\tSPEventLoop:                          "
          << sampleDuration(numSamples, task, spEventLoop) << "\n";
-    cout << "\tStatelessSPEventLoop:     "
+    cout << "\tStatelessSPEventLoop:                 "
          << sampleDuration(numSamples, task, spStatelessEventLoop) << "\n";
     cout << "\n";
 #ifdef LINK_EVPP
@@ -163,9 +163,9 @@ int main(int argc, char** argv) {
     cout << "\tStatelessEventLoopPool:               "
          << sampleDuration(numSamples, atomicTask, statelessEventLoopPool)
          << "\n";
-    cout << "\tSPEventLoopPool:          "
+    cout << "\tSPEventLoopPool:                      "
          << sampleDuration(numSamples, atomicTask, spEventLoopPool) << "\n";
-    cout << "\tStatelessSPEventLoopPool: "
+    cout << "\tStatelessSPEventLoopPool:             "
          << sampleDuration(numSamples, atomicTask, spStatelessEventLoopPool)
          << "\n";
 
@@ -181,9 +181,9 @@ int main(int argc, char** argv) {
     cout << "\tStatefulEventLoop:                    "
          << sampleDuration(numSamples, parameterLambda, statefulEventLoop)
          << "\n";
-    cout << "\tSPEventLoop:              "
+    cout << "\tSPEventLoop:                          "
          << sampleDuration(numSamples, capturingLambda, spEventLoop) << "\n";
-    cout << "\tStatefulSPEventLoop:      "
+    cout << "\tStatefulSPEventLoop:                  "
          << sampleDuration(numSamples, parameterLambda, spStatefulEventLoop)
          << "\n";
     cout << "\n";
@@ -200,10 +200,10 @@ int main(int argc, char** argv) {
          << sampleDuration(
               numSamples, atomicParameterLambda, statefulEventLoopPool)
          << "\n";
-    cout << "\tSPEventLoopPool:          "
+    cout << "\tSPEventLoopPool:                      "
          << sampleDuration(numSamples, atomicCapturingLambda, spEventLoopPool)
          << "\n";
-    cout << "\tStatefulSPEventLoopPool:  "
+    cout << "\tStatefulSPEventLoopPool:              "
          << sampleDuration(
               numSamples, atomicParameterLambda, spStatefulEventLoopPool)
          << "\n";

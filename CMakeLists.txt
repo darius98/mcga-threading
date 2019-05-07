@@ -45,6 +45,7 @@ if (MCGA_threading_benchmarks)
 
         if (MCGA_threading_benchmark_against_evpp)
             target_compile_definitions(${BENCHMARK_TARGET} PUBLIC LINK_EVPP)
+            target_link_directories(${BENCHMARK_TARGET} PUBLIC /usr/local/lib)
             target_include_directories(${BENCHMARK_TARGET} PUBLIC /usr/local/include)
             target_link_libraries(${BENCHMARK_TARGET} evpp_static event glog)
         endif ()
