@@ -45,8 +45,7 @@ class EventLoop : public DelayedQueue, public ImmediateQueue {
 };
 
 template<class P>
-using SingleProducerEventLoop
-  = EventLoop<P, SingleProducerImmediateQueueWrapper<P>>;
+using SPEventLoop = EventLoop<P, SPImmediateQueueWrapper<P>>;
 
 template<class Wrapper>
 class EventLoopConstruct : public Wrapper {
@@ -86,6 +85,6 @@ template<class P>
 using Enqueuer = base::EventLoop<P>;
 
 template<class P>
-using SingleProducerEnqueuer = base::SingleProducerEventLoop<P>;
+using SPEnqueuer = base::SPEventLoop<P>;
 
 }  // namespace mcga::threading

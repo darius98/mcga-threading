@@ -7,7 +7,7 @@
 namespace mcga::threading::base {
 
 template<class Processor>
-class SingleProducerImmediateQueueWrapper {
+class SPImmediateQueueWrapper {
   public:
     using Task = typename Processor::Task;
 

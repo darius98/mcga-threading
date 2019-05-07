@@ -17,16 +17,16 @@
 
 using mcga::threading::EventLoopThread;
 using mcga::threading::EventLoopThreadPool;
-using mcga::threading::SingleProducerEventLoopThread;
-using mcga::threading::SingleProducerEventLoopThreadPool;
+using mcga::threading::SPEventLoopThread;
+using mcga::threading::SPEventLoopThreadPool;
 using mcga::threading::StatefulEventLoopThread;
 using mcga::threading::StatefulEventLoopThreadPool;
-using mcga::threading::StatefulSingleProducerEventLoopThread;
-using mcga::threading::StatefulSingleProducerEventLoopThreadPool;
+using mcga::threading::StatefulSPEventLoopThread;
+using mcga::threading::StatefulSPEventLoopThreadPool;
 using mcga::threading::StatelessEventLoopThread;
 using mcga::threading::StatelessEventLoopThreadPool;
-using mcga::threading::StatelessSingleProducerEventLoopThread;
-using mcga::threading::StatelessSingleProducerEventLoopThreadPool;
+using mcga::threading::StatelessSPEventLoopThread;
+using mcga::threading::StatelessSPEventLoopThreadPool;
 using std::atomic_int;
 using std::cout;
 using std::false_type;
@@ -99,8 +99,8 @@ int main(int argc, char** argv) {
 #endif
     EventLoopThread eventLoop;
     StatelessEventLoopThread statelessEventLoop;
-    SingleProducerEventLoopThread spEventLoop;
-    StatelessSingleProducerEventLoopThread spStatelessEventLoop;
+    SPEventLoopThread spEventLoop;
+    StatelessSPEventLoopThread spStatelessEventLoop;
 
 #ifdef LINK_EVPP
     evpp::EventLoopThreadPool evppEventLoopPool1(
@@ -110,8 +110,8 @@ int main(int argc, char** argv) {
 #endif
     EventLoopThreadPool eventLoopPool;
     StatelessEventLoopThreadPool statelessEventLoopPool;
-    SingleProducerEventLoopThreadPool spEventLoopPool;
-    StatelessSingleProducerEventLoopThreadPool spStatelessEventLoopPool;
+    SPEventLoopThreadPool spEventLoopPool;
+    StatelessSPEventLoopThreadPool spStatelessEventLoopPool;
 
     int capture = 1;
     vector<int> capture2(30, 0);
@@ -135,9 +135,9 @@ int main(int argc, char** argv) {
       capture, capture2, capture3);
     StatefulEventLoopThreadPool<int&, vector<int>, const double&>
       statefulEventLoopPool(capture, capture2, capture3);
-    StatefulSingleProducerEventLoopThread<int&, vector<int>, const double&>
+    StatefulSPEventLoopThread<int&, vector<int>, const double&>
       spStatefulEventLoop(capture, capture2, capture3);
-    StatefulSingleProducerEventLoopThreadPool<int&, vector<int>, const double&>
+    StatefulSPEventLoopThreadPool<int&, vector<int>, const double&>
       spStatefulEventLoopPool(capture, capture2, capture3);
 
     cout << "Non-capturing (" << numSamples << " samples):\n";
@@ -149,9 +149,9 @@ int main(int argc, char** argv) {
          << sampleDuration(numSamples, task, eventLoop) << "\n";
     cout << "\tStatelessEventLoop:                   "
          << sampleDuration(numSamples, task, statelessEventLoop) << "\n";
-    cout << "\tSingleProducerEventLoop:              "
+    cout << "\tSPEventLoop:              "
          << sampleDuration(numSamples, task, spEventLoop) << "\n";
-    cout << "\tStatelessSingleProducerEventLoop:     "
+    cout << "\tStatelessSPEventLoop:     "
          << sampleDuration(numSamples, task, spStatelessEventLoop) << "\n";
     cout << "\n";
 #ifdef LINK_EVPP
@@ -163,9 +163,9 @@ int main(int argc, char** argv) {
     cout << "\tStatelessEventLoopPool:               "
          << sampleDuration(numSamples, atomicTask, statelessEventLoopPool)
          << "\n";
-    cout << "\tSingleProducerEventLoopPool:          "
+    cout << "\tSPEventLoopPool:          "
          << sampleDuration(numSamples, atomicTask, spEventLoopPool) << "\n";
-    cout << "\tStatelessSingleProducerEventLoopPool: "
+    cout << "\tStatelessSPEventLoopPool: "
          << sampleDuration(numSamples, atomicTask, spStatelessEventLoopPool)
          << "\n";
 
@@ -181,9 +181,9 @@ int main(int argc, char** argv) {
     cout << "\tStatefulEventLoop:                    "
          << sampleDuration(numSamples, parameterLambda, statefulEventLoop)
          << "\n";
-    cout << "\tSingleProducerEventLoop:              "
+    cout << "\tSPEventLoop:              "
          << sampleDuration(numSamples, capturingLambda, spEventLoop) << "\n";
-    cout << "\tStatefulSingleProducerEventLoop:      "
+    cout << "\tStatefulSPEventLoop:      "
          << sampleDuration(numSamples, parameterLambda, spStatefulEventLoop)
          << "\n";
     cout << "\n";
@@ -200,10 +200,10 @@ int main(int argc, char** argv) {
          << sampleDuration(
               numSamples, atomicParameterLambda, statefulEventLoopPool)
          << "\n";
-    cout << "\tSingleProducerEventLoopPool:          "
+    cout << "\tSPEventLoopPool:          "
          << sampleDuration(numSamples, atomicCapturingLambda, spEventLoopPool)
          << "\n";
-    cout << "\tStatefulSingleProducerEventLoopPool:  "
+    cout << "\tStatefulSPEventLoopPool:  "
          << sampleDuration(
               numSamples, atomicParameterLambda, spStatefulEventLoopPool)
          << "\n";

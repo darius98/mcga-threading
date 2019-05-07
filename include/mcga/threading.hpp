@@ -21,9 +21,9 @@
     MCGA_THREADING_DEFINE_CONSTRUCT_INTERNAL(                                  \
       T_DEF, PROCESSOR, PREFIX, EventLoopThreadPool);                          \
     MCGA_THREADING_DEFINE_CONSTRUCT_INTERNAL(                                  \
-      T_DEF, PROCESSOR, PREFIX, SingleProducerEventLoopThread);                \
+      T_DEF, PROCESSOR, PREFIX, SPEventLoopThread);                            \
     MCGA_THREADING_DEFINE_CONSTRUCT_INTERNAL(                                  \
-      T_DEF, PROCESSOR, PREFIX, SingleProducerEventLoopThreadPool);
+      T_DEF, PROCESSOR, PREFIX, SPEventLoopThreadPool);
 
 #define MCGA_THREADING_DEFINE_CONSTRUCTS(PROCESSOR, PREFIX)                    \
     MCGA_THREADING_DEFINE_CONSTRUCTS_INTERNAL(, PROCESSOR, PREFIX);
