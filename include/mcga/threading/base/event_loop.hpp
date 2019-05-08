@@ -4,11 +4,10 @@
 #include <thread>
 #include <vector>
 
-#include <mcga/threading/base/delayed_queue_wrapper.hpp>
-#include <mcga/threading/base/disallow_copy_and_move.hpp>
-#include <mcga/threading/base/immediate_queue_wrapper.hpp>
-#include <mcga/threading/base/loop_tick_duration.hpp>
-#include <mcga/threading/base/single_producer_immediate_queue_wrapper.hpp>
+#include "delayed_queue_wrapper.hpp"
+#include "immediate_queue_wrapper.hpp"
+#include "loop_tick_duration.hpp"
+#include "sp_immediate_queue_wrapper.hpp"
 
 namespace mcga::threading::base {
 
@@ -41,7 +40,7 @@ class EventLoop : public DelayedQueue, public ImmediateQueue {
     }
 
     template<class T>
-    friend class ThreadWrapper;
+    friend class ThreadWrapperBase;
 };
 
 template<class P>

@@ -2,7 +2,7 @@
 
 #include <concurrentqueue.h>
 
-#include <mcga/threading/base/method_checks.hpp>
+#include "method_checks.hpp"
 
 namespace mcga::threading::base {
 
@@ -17,7 +17,7 @@ class ImmediateQueueWrapper {
 
   protected:
     std::size_t getImmediateQueueSize() const {
-        return queue.size_approx() + queueBufferSize;
+        return queue.size_approx() + bufferSize;
     }
 
     template<class Enqueuer>
@@ -26,17 +26,16 @@ class ImmediateQueueWrapper {
         if (queueSize == 0) {
             return false;
         }
-        if (queueSize > queueBuffer.size()) {
-            queueBuffer.resize(queueSize);
+        if (queueSize > buffer.size()) {
+            buffer.resize(queueSize);
         }
-        queueBufferSize = queue.try_dequeue_bulk(
-          queueToken, queueBuffer.begin(), queueBuffer.size());
-        for (size_t i = 0; queueBufferSize > 0; --queueBufferSize, ++i) {
-            if constexpr (hasExecuteTaskWithEnqueuer<Processor,
-                                                              Enqueuer>) {
-                processor->executeTask(queueBuffer[i], enqueuer);
+        bufferSize
+          = queue.try_dequeue_bulk(queueToken, buffer.begin(), buffer.size());
+        for (size_t i = 0; bufferSize > 0; --bufferSize, ++i) {
+            if constexpr (hasExecuteTaskWithEnqueuer<Processor, Enqueuer>) {
+                processor->executeTask(buffer[i], enqueuer);
             } else {
-                processor->executeTask(queueBuffer[i]);
+                processor->executeTask(buffer[i]);
             }
         }
         return true;
@@ -45,8 +44,8 @@ class ImmediateQueueWrapper {
   private:
     moodycamel::ConcurrentQueue<Task> queue;
     moodycamel::ConsumerToken queueToken{queue};
-    std::vector<Task> queueBuffer;
-    volatile std::size_t queueBufferSize = 0;
+    std::vector<Task> buffer;
+    volatile std::size_t bufferSize = 0;
 };
 
 }  // namespace mcga::threading::base

@@ -3,102 +3,55 @@
 #include <atomic>
 #include <thread>
 
-#include <mcga/threading/base/disallow_copy_and_move.hpp>
-
 namespace mcga::threading::base {
 
 template<class W>
-class ThreadWrapper {
-  private:
-    struct InsideThreadPoolT {};
-
-    static constexpr InsideThreadPoolT insideThreadPool;
-
+class ThreadWrapperBase {
   public:
-    using Wrapped = W;
-    using Processor = typename W::Processor;
-    using Task = typename W::Task;
-
-    explicit ThreadWrapper(InsideThreadPoolT /*unused*/,
-                           volatile std::atomic_bool* started,
-                           Processor* processor)
-            : insidePool(true), processor(processor), started(started) {
-    }
-
-    template<class... Args>
-    explicit ThreadWrapper(Args&&... args)
-            : insidePool(false),
-              processor(new Processor(std::forward<Args>(args)...)),
-              started(new std::atomic_bool(false)) {
-    }
-
-    MCGA_THREADING_DISALLOW_COPY_AND_MOVE(ThreadWrapper);
-
-    ~ThreadWrapper() {
-        stopRaw();
-        if (!insidePool) {
-            delete started;
-            delete processor;
-        }
-    }
-
     std::size_t sizeApprox() const {
         return worker.sizeApprox();
     }
 
-    bool isRunning() const {
-        return started->load();
-    }
-
-    void start() {
-        while (isInStartOrStop.test_and_set()) {
-            std::this_thread::yield();
-        }
-        if (!insidePool) {
-            if (!started->load()) {
-                workerThread = std::thread([this]() {
-                    started->store(true);
-                    worker.start(started, processor);
-                });
-                while (!started->load()) {
-                    std::this_thread::yield();
-                }
-            }
-        } else {
-            volatile bool localStarted = false;
-            workerThread = std::thread([this, &localStarted]() {
-                localStarted = true;
-                worker.start(started, processor);
-            });
-            while (!localStarted) {
-                std::this_thread::yield();
-            }
-        }
-        isInStartOrStop.clear();
-    }
-
-    void stop() {
-        stopRaw();
-        isInStartOrStop.clear();
-    }
-
-    Processor* getProcessor() {
-        return processor;
-    }
-
   protected:
+    using Processor = typename W::Processor;
+
     W* getWorker() {
         return &worker;
     }
 
-  private:
-    void stopRaw() {
+    void acquireStartOrStop() {
         while (isInStartOrStop.test_and_set()) {
             std::this_thread::yield();
         }
-        if (!insidePool) {
-            started->store(false);
+    }
+
+    void releaseStartOrStop() {
+        isInStartOrStop.clear();
+    }
+
+    void startThread(std::atomic_bool* started, Processor* processor) {
+        workerThread = std::thread([this, started, processor]() {
+            started->store(true);
+            this->worker.start(started, processor);
+        });
+        while (!started->load()) {
+            std::this_thread::yield();
         }
+    }
+
+    void startThreadEmbedded(std::atomic_bool* started, Processor* processor) {
+        std::atomic_bool localStarted = false;
+        this->workerThread
+          = std::thread([this, &localStarted, started, processor]() {
+                localStarted = true;
+                this->worker.start(started, processor);
+            });
+        while (!localStarted) {
+            std::this_thread::yield();
+        }
+    }
+
+    void tryJoin() {
         if (workerThread.joinable()) {
             // Since no other thread can enter start() or stop() while we are
             // here, nothing can happen that turns joinable() into
@@ -107,14 +60,114 @@ class ThreadWrapper {
         }
     }
 
-    bool insidePool;
-
-    Wrapped worker;
-    Processor* processor;
-
-    std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
-    volatile std::atomic_bool* started;
+    W worker;
     std::thread workerThread;
+    std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
+};
+
+template<class W>
+class ThreadWrapper : public ThreadWrapperBase<W> {
+  public:
+    using Wrapped = W;
+    using Processor = typename W::Processor;
+    using Task = typename W::Task;
+
+    template<class... Args>
+    explicit ThreadWrapper(Args&&... args)
+            : processor(std::forward<Args>(args)...), started(false) {
+    }
+
+    ThreadWrapper(const ThreadWrapper&) = delete;
+    ThreadWrapper(ThreadWrapper&&) = delete;
+
+    ThreadWrapper& operator=(const ThreadWrapper&) = delete;
+    ThreadWrapper& operator=(ThreadWrapper&&) = delete;
+
+    ~ThreadWrapper() {
+        stopRaw();
+    }
+
+    bool isRunning() const {
+        return started.load();
+    }
+
+    void start() {
+        this->acquireStartOrStop();
+        if (!isRunning()) {
+            this->startThread(&started, &processor);
+        }
+        this->releaseStartOrStop();
+    }
+
+    void stop() {
+        stopRaw();
+        this->releaseStartOrStop();
+    }
+
+    Processor* getProcessor() {
+        return &processor;
+    }
+
+  private:
+    void stopRaw() {
+        this->acquireStartOrStop();
+        started = false;
+        this->tryJoin();
+    }
+
+    std::atomic_bool started;
+    Processor processor;
+};
+
+template<class W>
+class EmbeddedThreadWrapper : public ThreadWrapperBase<W> {
+  public:
+    using Wrapped = W;
+    using Processor = typename W::Processor;
+    using Task = typename W::Task;
+
+    explicit EmbeddedThreadWrapper(std::atomic_bool* started,
+                                   Processor* processor)
+            : started(started), processor(processor) {
+    }
+
+    EmbeddedThreadWrapper(const EmbeddedThreadWrapper&) = delete;
+    EmbeddedThreadWrapper(EmbeddedThreadWrapper&&) = delete;
+
+    EmbeddedThreadWrapper& operator=(const EmbeddedThreadWrapper&) = delete;
+    EmbeddedThreadWrapper& operator=(EmbeddedThreadWrapper&&) = delete;
+
+    ~EmbeddedThreadWrapper() {
+        stopRaw();
+    }
+
+    bool isRunning() const {
+        return started->load();
+    }
+
+    void start() {
+        this->acquireStartOrStop();
+        this->startThreadEmbedded(started, processor);
+        this->releaseStartOrStop();
+    }
+
+    void stop() {
+        stopRaw();
+        this->releaseStartOrStop();
+    }
+
+    Processor* getProcessor() {
+        return processor;
+    }
+
+  private:
+    void stopRaw() {
+        this->acquireStartOrStop();
+        this->tryJoin();
+    }
+
+    std::atomic_bool* started;
+    Processor* processor;
 
     template<class T, class I>
     friend class ThreadPoolWrapper;

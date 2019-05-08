@@ -4,15 +4,14 @@
 #include <memory>
 #include <thread>
 
-#include <mcga/threading/base/disallow_copy_and_move.hpp>
-#include <mcga/threading/base/thread_wrapper.hpp>
+#include "thread_wrapper.hpp"
 
 namespace mcga::threading::base {
 
 template<class W, class Idx>
 class ThreadPoolWrapper {
   private:
-    using Thread = ThreadWrapper<W>;
+    using Thread = EmbeddedThreadWrapper<W>;
 
   public:
     struct NumThreads {
@@ -31,8 +30,7 @@ class ThreadPoolWrapper {
             : processor(std::forward<Args>(args)...) {
         threads.reserve(numThreads.numThreads);
         for (int i = 0; i < numThreads.numThreads; i += 1) {
-            threads.push_back(std::make_unique<Thread>(
-              Thread::insideThreadPool, &started, &processor));
+            threads.push_back(std::make_unique<Thread>(&started, &processor));
         }
     }
 
@@ -42,7 +40,11 @@ class ThreadPoolWrapper {
                                 std::forward<Args>(args)...) {
     }
 
-    MCGA_THREADING_DISALLOW_COPY_AND_MOVE(ThreadPoolWrapper);
+    ThreadPoolWrapper(const ThreadPoolWrapper&) = delete;
+    ThreadPoolWrapper(ThreadPoolWrapper&&) = delete;
+
+    ThreadPoolWrapper& operator=(const ThreadPoolWrapper&) = delete;
+    ThreadPoolWrapper& operator=(ThreadPoolWrapper&&) = delete;
 
     ~ThreadPoolWrapper() {
         stopRaw();
@@ -103,7 +105,7 @@ class ThreadPoolWrapper {
     Processor processor;
     Idx currentThreadId = 0;
     std::atomic_flag isInStartOrStop = ATOMIC_FLAG_INIT;
-    volatile std::atomic_bool started = false;
+    std::atomic_bool started = false;
     std::vector<std::unique_ptr<Thread>> threads;
 };
 
