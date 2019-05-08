@@ -2,12 +2,13 @@
 
 #include <concurrentqueue.h>
 
-#include "method_checks.hpp"
-
 namespace mcga::threading::base {
 
 template<class Processor>
 class ImmediateQueueWrapper {
+  private:
+    static constexpr std::size_t kInitialBufferCapacity = 16;
+
   public:
     using Task = typename Processor::Task;
 
@@ -15,28 +16,29 @@ class ImmediateQueueWrapper {
         queue.enqueue(std::move(task));
     }
 
+    ~ImmediateQueueWrapper() {
+        delete[] buffer;
+    }
+
   protected:
     std::size_t getImmediateQueueSize() const {
         return queue.size_approx() + bufferSize;
     }
 
-    template<class Enqueuer>
-    bool executeImmediate(Processor* processor, Enqueuer* enqueuer) {
+    bool executeImmediate(Processor* processor) {
         auto queueSize = queue.size_approx();
         if (queueSize == 0) {
             return false;
         }
-        if (queueSize > buffer.size()) {
-            buffer.resize(queueSize);
+        if (queueSize > bufferCapacity) {
+            delete[] buffer;
+            bufferCapacity *= 2;
+            buffer = new Task[bufferCapacity];
         }
         bufferSize
-          = queue.try_dequeue_bulk(queueToken, buffer.begin(), buffer.size());
+          = queue.try_dequeue_bulk(queueToken, buffer, bufferCapacity);
         for (size_t i = 0; bufferSize > 0; --bufferSize, ++i) {
-            if constexpr (hasExecuteTaskWithEnqueuer<Processor, Enqueuer>) {
-                processor->executeTask(buffer[i], enqueuer);
-            } else {
-                processor->executeTask(buffer[i]);
-            }
+            processor->executeTask(buffer[i]);
         }
         return true;
     }
@@ -44,8 +46,9 @@ class ImmediateQueueWrapper {
   private:
     moodycamel::ConcurrentQueue<Task> queue;
     moodycamel::ConsumerToken queueToken{queue};
-    std::vector<Task> buffer;
-    volatile std::size_t bufferSize = 0;
+    std::size_t bufferCapacity = kInitialBufferCapacity;
+    Task* buffer = new Task[bufferCapacity];
+    std::atomic_size_t bufferSize = 0;
 };
 
 }  // namespace mcga::threading::base

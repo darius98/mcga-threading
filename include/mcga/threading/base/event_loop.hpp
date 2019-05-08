@@ -19,20 +19,15 @@ class EventLoop : public DelayedQueue, public ImmediateQueue {
     using Processor = P;
     using Task = typename Processor::Task;
 
-    static_assert(
-      hasExecuteTaskSimple<
-        Processor> || hasExecuteTaskWithEnqueuer<Processor, EventLoop>,
-      "No viable executeTask method for EventLoop construct");
-
   private:
     std::size_t sizeApprox() const {
         return this->getImmediateQueueSize() + this->getDelayedQueueSize();
     }
 
-    void start(volatile std::atomic_bool* running, Processor* processor) {
+    void start(std::atomic_bool* running, Processor* processor) {
         while (running->load()) {
-            while (this->executeDelayed(processor, this)
-                   || this->executeImmediate(processor, this)) {
+            while (this->executeDelayed(processor)
+                   || this->executeImmediate(processor)) {
                 std::this_thread::yield();
             }
             std::this_thread::sleep_for(base::loopTickDuration);

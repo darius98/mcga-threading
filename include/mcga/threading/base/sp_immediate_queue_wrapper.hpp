@@ -2,12 +2,13 @@
 
 #include <concurrentqueue.h>
 
-#include <mcga/threading/base/method_checks.hpp>
-
 namespace mcga::threading::base {
 
 template<class Processor>
 class SPImmediateQueueWrapper {
+  private:
+    static constexpr std::size_t kInitialBufferCapacity = 16;
+
   public:
     using Task = typename Processor::Task;
 
@@ -15,28 +16,29 @@ class SPImmediateQueueWrapper {
         queue.enqueue(queueProducerToken, std::move(task));
     }
 
-  protected:
-    std::size_t getImmediateQueueSize() const {
-        return queue.size_approx() + queueBufferSize;
+    ~SPImmediateQueueWrapper() {
+        delete[] buffer;
     }
 
-    template<class Enqueuer>
-    bool executeImmediate(Processor* processor, Enqueuer* enqueuer) {
+  protected:
+    std::size_t getImmediateQueueSize() const {
+        return queue.size_approx() + bufferSize;
+    }
+
+    bool executeImmediate(Processor* processor) {
         auto queueSize = queue.size_approx();
         if (queueSize == 0) {
             return false;
         }
-        if (queueSize > queueBuffer.size()) {
-            queueBuffer.resize(queueSize);
+        if (queueSize > bufferCapacity) {
+            delete[] buffer;
+            bufferCapacity *= 2;
+            buffer = new Task[bufferCapacity];
         }
-        queueBufferSize = queue.try_dequeue_bulk(
-          queueConsumerToken, queueBuffer.begin(), queueBuffer.size());
-        for (size_t i = 0; queueBufferSize > 0; --queueBufferSize, ++i) {
-            if constexpr (hasExecuteTaskWithEnqueuer<Processor, Enqueuer>) {
-                processor->executeTask(queueBuffer[i], enqueuer);
-            } else {
-                processor->executeTask(queueBuffer[i]);
-            }
+        bufferSize = queue.try_dequeue_bulk(
+          queueConsumerToken, buffer, bufferCapacity);
+        for (size_t i = 0; bufferSize > 0; --bufferSize, ++i) {
+            processor->executeTask(buffer[i]);
         }
         return true;
     }
@@ -45,8 +47,9 @@ class SPImmediateQueueWrapper {
     moodycamel::ConcurrentQueue<Task> queue;
     moodycamel::ProducerToken queueProducerToken{queue};
     moodycamel::ConsumerToken queueConsumerToken{queue};
-    std::vector<Task> queueBuffer;
-    std::size_t queueBufferSize = 0;
+    std::size_t bufferCapacity = kInitialBufferCapacity;
+    Task* buffer = new Task[bufferCapacity];
+    std::atomic_size_t bufferSize = 0;
 };
 
 }  // namespace mcga::threading::base

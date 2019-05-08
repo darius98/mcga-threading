@@ -12,7 +12,7 @@ using std::unique_ptr;
 
 int main() {
     ObjectEventLoopThread<unique_ptr<int>> loop(
-      [](unique_ptr<int> obj) { cout << "Processing " << *obj << "\n"; });
+      [](unique_ptr<int>& obj) { cout << "Processing " << *obj << "\n"; });
 
     loop.start();
     loop.enqueueDelayed(make_unique<int>(300), 300ms);

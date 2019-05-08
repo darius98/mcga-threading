@@ -8,7 +8,7 @@ class FunctionProcessor {
   public:
     using Task = std::function<void()>;
 
-    void executeTask(const Task& task) {
+    static void executeTask(const Task& task) {
         task();
     }
 };

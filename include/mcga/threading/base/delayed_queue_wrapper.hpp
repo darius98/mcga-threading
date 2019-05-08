@@ -4,8 +4,7 @@
 #include <chrono>
 #include <mutex>
 
-#include <mcga/threading/base/delayed_task.hpp>
-#include <mcga/threading/base/method_checks.hpp>
+#include "delayed_task.hpp"
 
 namespace mcga::threading::base {
 
@@ -56,18 +55,13 @@ class DelayedQueueWrapper {
         return top;
     }
 
-    template<class Enqueuer>
-    bool executeDelayed(Processor* processor, Enqueuer* enqueuer) {
+    bool executeDelayed(Processor* processor) {
         auto delayedTask = this->popDelayedQueue();
         if (delayedTask == nullptr) {
             return false;
         }
         if (!delayedTask->isCancelled()) {
-            if constexpr (hasExecuteTaskWithEnqueuer<Processor, Enqueuer>) {
-                processor->executeTask(delayedTask->task, enqueuer);
-            } else {
-                processor->executeTask(delayedTask->task);
-            }
+            processor->executeTask(delayedTask->task);
         }
         if (!delayedTask->isCancelled() && delayedTask->isInterval()) {
             delayedTask->setTimePoint();
