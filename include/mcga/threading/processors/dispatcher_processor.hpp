@@ -19,7 +19,7 @@ class DispatcherProcessor {
         callbacks.push_back(std::move(callback));
     }
 
-    void handleTask(const Task& task) {
+    void executeTask(Task& task) {
         for (const Callback& callback: callbacks) {
             std::apply(callback, task);
         }
@@ -31,7 +31,7 @@ class DispatcherProcessor<T> {
   public:
     using Task = T;
 
-    using Callback = std::function<void(T&&)>;
+    using Callback = std::function<void(T&)>;
 
     std::vector<Callback> callbacks;
 
@@ -39,9 +39,9 @@ class DispatcherProcessor<T> {
         callbacks.push_back(std::move(callback));
     }
 
-    void executeTask(Task&& task) {
+    void executeTask(Task& task) {
         for (const Callback& callback: callbacks) {
-            callback(std::move(task));
+            callback(task);
         }
     }
 };

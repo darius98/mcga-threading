@@ -13,7 +13,7 @@ class ObjectProcessor {
     explicit ObjectProcessor(std::function<void(Args...)> func): func(func) {
     }
 
-    void executeTask(const Task& task) {
+    void executeTask(Task& task) {
         std::apply(func, task);
     }
 

@@ -14,7 +14,7 @@ class StatefulFunctionProcessor {
             : args(std::forward<Args>(args)...) {
     }
 
-    void executeTask(const Task& task) {
+    void executeTask(Task& task) {
         std::apply(task, args);
     }
 
