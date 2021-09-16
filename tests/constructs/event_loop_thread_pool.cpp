@@ -33,20 +33,6 @@ using TestingProcessor = BasicProcessor<int>;
 using EventLoopThreadPool = EventLoopThreadPoolConstruct<TestingProcessor>;
 
 TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
-    EventLoopThreadPool* pool = nullptr;
-
-    setUp([&] {
-        pool = new EventLoopThreadPool(EventLoopThreadPool::NumThreads(3));
-        pool->start();
-    });
-
-    tearDown([&] {
-        TestingProcessor::reset();
-        pool->stop();
-        delete pool;
-        pool = nullptr;
-    });
-
     multiRunTest(
       "Tasks enqueued in a EventLoopThreadPool are executed on "
       "multiple threads, different from the main thread",
@@ -54,9 +40,12 @@ TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
       [&] {
           constexpr int numTasks = 100000;
 
+          EventLoopThreadPool pool(EventLoopThreadPool::NumThreads(3));
+          pool.start();
+
           for (int i = 0; i < numTasks; ++i) {
-              pool->enqueue(1);
-              pool->enqueueDelayed(1, 3ms);
+              pool.enqueue(1);
+              pool.enqueueDelayed(1, 3ms);
           }
 
           while (TestingProcessor::numProcessed() != 2 * numTasks) {
@@ -69,44 +58,52 @@ TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
           expect(TestingProcessor::threadIds,
                  eachElement(
                    isNotEqualTo(hash<thread::id>()(this_thread::get_id()))));
+          TestingProcessor::reset();
+          pool.stop();
       });
 
-    multiRunTest("Tasks enqueued from multiple threads in a EventLoopThreadPool"
-                 " are executed on multiple threads, different from the main "
-                 "thread",
-                 10,
-                 [&] {
-                     constexpr int numWorkers = 100;
-                     constexpr int numWorkerJobs = 1000;
+    multiRunTest(
+      "Tasks enqueued from multiple threads in a EventLoopThreadPool"
+      " are executed on multiple threads, different from the main "
+      "thread",
+      10,
+      [&] {
+          constexpr int numWorkers = 100;
+          constexpr int numWorkerJobs = 1000;
 
-                     vector<thread> workers;
-                     workers.reserve(numWorkers);
-                     for (int i = 0; i < numWorkers; ++i) {
-                         workers.emplace_back([&] {
-                             for (int j = 0; j < numWorkerJobs; ++j) {
-                                 if (randomBool()) {
-                                     pool->enqueueDelayed(1, randomDelay());
-                                 } else {
-                                     pool->enqueue(1);
-                                 }
-                             }
-                         });
-                     }
-                     for (int i = 0; i < numWorkers; ++i) {
-                         workers[i].join();
-                     }
+          EventLoopThreadPool pool(EventLoopThreadPool::NumThreads(3));
+          pool.start();
 
-                     while (TestingProcessor::numProcessed()
-                            != numWorkers * numWorkerJobs) {
-                         this_thread::sleep_for(1ms);
-                     }
-                     this_thread::sleep_for(100ms);
+          vector<thread> workers;
+          workers.reserve(numWorkers);
+          for (int i = 0; i < numWorkers; ++i) {
+              workers.emplace_back([&] {
+                  for (int j = 0; j < numWorkerJobs; ++j) {
+                      if (randomBool()) {
+                          pool.enqueueDelayed(1, randomDelay());
+                      } else {
+                          pool.enqueue(1);
+                      }
+                  }
+              });
+          }
+          for (int i = 0; i < numWorkers; ++i) {
+              workers[i].join();
+          }
 
-                     expect(TestingProcessor::numProcessed(),
-                            isEqualTo(numWorkers * numWorkerJobs));
-                     expect(TestingProcessor::threadIds, hasSize(3));
-                     expect(TestingProcessor::threadIds,
-                            eachElement(isNotEqualTo(
-                              hash<thread::id>()(this_thread::get_id()))));
-                 });
+          while (TestingProcessor::numProcessed()
+                 != numWorkers * numWorkerJobs) {
+              this_thread::sleep_for(1ms);
+          }
+          this_thread::sleep_for(100ms);
+
+          expect(TestingProcessor::numProcessed(),
+                 isEqualTo(numWorkers * numWorkerJobs));
+          expect(TestingProcessor::threadIds, hasSize(3));
+          expect(TestingProcessor::threadIds,
+                 eachElement(
+                   isNotEqualTo(hash<thread::id>()(this_thread::get_id()))));
+          TestingProcessor::reset();
+          pool.stop();
+      });
 }
