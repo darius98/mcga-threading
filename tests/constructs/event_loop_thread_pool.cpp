@@ -1,11 +1,9 @@
 #pragma ide diagnostic ignored "readability-magic-numbers"
 
-#include <mutex>
-#include <set>
 #include <vector>
 
-#include <mcga/test_ext/matchers.hpp>
 #include <mcga/test.hpp>
+#include <mcga/test_ext/matchers.hpp>
 
 #include <mcga/threading.hpp>
 
@@ -81,9 +79,10 @@ TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
                      constexpr int numWorkers = 100;
                      constexpr int numWorkerJobs = 1000;
 
-                     vector<thread*> workers(numWorkers, nullptr);
+                     vector<thread> workers;
+                     workers.reserve(numWorkers);
                      for (int i = 0; i < numWorkers; ++i) {
-                         workers[i] = new thread([&] {
+                         workers.emplace_back([&] {
                              for (int j = 0; j < numWorkerJobs; ++j) {
                                  if (randomBool()) {
                                      pool->enqueueDelayed(1, randomDelay());
@@ -94,8 +93,7 @@ TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
                          });
                      }
                      for (int i = 0; i < numWorkers; ++i) {
-                         workers[i]->join();
-                         delete workers[i];
+                         workers[i].join();
                      }
 
                      while (TestingProcessor::numProcessed()

@@ -2,8 +2,8 @@
 
 #include <algorithm>
 
-#include <mcga/test_ext/matchers.hpp>
 #include <mcga/test.hpp>
+#include <mcga/test_ext/matchers.hpp>
 
 #include <mcga/threading/base/event_loop.hpp>
 #include <mcga/threading/constructs.hpp>
@@ -38,6 +38,7 @@ using std::chrono::milliseconds;
 using std::chrono::nanoseconds;
 using std::chrono::steady_clock;
 using std::operator""ms;
+using std::operator""us;
 namespace this_thread = std::this_thread;
 
 using TestingProcessor = BasicProcessor<int>;
@@ -61,17 +62,16 @@ ostream& operator<<(ostream& os, const nanoseconds& ns) {
 TEST_CASE(EventLoopThread, "EventLoopThread") {
     constexpr int task = 1;
 
-    EventLoopThread* loop = nullptr;
+    std::unique_ptr<EventLoopThread> loop;
 
     setUp([&] {
-        loop = new EventLoopThread();
+        loop = std::make_unique<EventLoopThread>();
         loop->start();
     });
 
     tearDown([&] {
         loop->stop();
-        delete loop;
-        loop = nullptr;
+        loop.reset();
         TestingProcessor::reset();
     });
 
@@ -212,9 +212,10 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
                      constexpr int numWorkers = 100;
                      constexpr int numWorkerJobs = 1000;
 
-                     vector<thread*> workers(numWorkers, nullptr);
+                     vector<thread> workers;
+                     workers.reserve(numWorkers);
                      for (int i = 0; i < numWorkers; ++i) {
-                         workers[i] = new thread([&loop, i] {
+                         workers.emplace_back([&loop, i] {
                              for (int j = 0; j < numWorkerJobs; ++j) {
                                  loop->enqueueDelayed(i * numWorkerJobs + j,
                                                       randomDelay());
@@ -222,8 +223,7 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
                          });
                      }
                      for (int i = 0; i < numWorkers; ++i) {
-                         workers[i]->join();
-                         delete workers[i];
+                         workers[i].join();
                      }
                      while (TestingProcessor::numProcessed()
                             < numWorkers * numWorkerJobs) {
@@ -241,19 +241,19 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
 
     test(TestConfig("A delayed invocation is never executed before "
                     "a period at least equal to its delay has passed")
-           .setTimeTicksLimit(50),
+           .setTimeTicksLimit(10),
          [&] {
-             constexpr int numSamples = 10000;
+             constexpr int numSamples = 200;
              for (int i = 0; i < numSamples; ++i) {
-                 nanoseconds expected = 3ms;
+                 nanoseconds expected = 2ms;
                  auto startTime = steady_clock::now();
                  nanoseconds actual(0);
-                 loop->enqueueDelayed(task, 3ms);
+                 loop->enqueueDelayed(task, 2ms);
                  TestingProcessor::afterHandle
                    = [&] { actual = steady_clock::now() - startTime; };
 
                  while (actual.count() == 0) {
-                     this_thread::sleep_for(1ms);
+                     this_thread::sleep_for(10us);
                  }
 
                  expect(actual, isGreaterThanEqual(expected));

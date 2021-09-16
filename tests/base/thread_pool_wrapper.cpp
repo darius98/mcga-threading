@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include <mcga/test_ext/matchers.hpp>
 #include <mcga/test.hpp>
+#include <mcga/test_ext/matchers.hpp>
 
 #include <mcga/threading.hpp>
 
@@ -47,13 +47,12 @@ struct BasicWorker {
 
 TEST_CASE(ThreadPoolWrapper, "ThreadPoolWrapper") {
     test("Starting and stopping ThreadPoolWrapper", [&] {
-        auto loop = new ThreadPoolWrapper<BasicWorker, std::atomic_size_t>(8ul);
-        expect(loop->isRunning(), isFalse);
-        loop->start();
-        expect(loop->isRunning(), isTrue);
-        loop->stop();
-        expect(loop->isRunning(), isFalse);
-        delete loop;
+        ThreadPoolWrapper<BasicWorker, std::atomic_size_t> loop(8ul);
+        expect(loop.isRunning(), isFalse);
+        loop.start();
+        expect(loop.isRunning(), isTrue);
+        loop.stop();
+        expect(loop.isRunning(), isFalse);
     });
 
     multiRunTest(TestConfig("Concurrent starts and stops do not break the "
@@ -61,30 +60,26 @@ TEST_CASE(ThreadPoolWrapper, "ThreadPoolWrapper") {
                    .setTimeTicksLimit(10),
                  10,
                  [&] {
-                     constexpr int numWorkers = 100;
-                     constexpr int numOps = 100;
+                     constexpr int numWorkers = 30;
+                     constexpr int numOps = 70;
 
-                     auto loop
-                       = new ThreadPoolWrapper<BasicWorker, std::atomic_size_t>(
-                         8ul);
+                     ThreadPoolWrapper<BasicWorker, std::atomic_size_t> loop(8ul);
 
-                     vector<thread*> workers(numWorkers, nullptr);
+                     vector<thread> workers;
+                     workers.reserve(numWorkers);
                      for (int i = 0; i < numWorkers; ++i) {
-                         workers[i] = new thread([&] {
+                         workers.emplace_back([&] {
                              for (int j = 0; j < numOps; ++j) {
                                  if (randomBool()) {
-                                     loop->start();
+                                     loop.start();
                                  } else {
-                                     loop->stop();
+                                     loop.stop();
                                  }
                              }
                          });
                      }
                      for (int i = 0; i < numWorkers; ++i) {
-                         workers[i]->join();
-                         delete workers[i];
+                         workers[i].join();
                      }
-
-                     delete loop;
                  });
 }

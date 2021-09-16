@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include <mcga/test_ext/matchers.hpp>
 #include <mcga/test.hpp>
+#include <mcga/test_ext/matchers.hpp>
 
 #include <mcga/threading.hpp>
 
@@ -47,13 +47,12 @@ struct BasicWorker {
 
 TEST_CASE(ThreadWrapper, "ThreadWrapper") {
     test("Starting and stopping thread wrapper", [&] {
-        auto loop = new ThreadWrapper<BasicWorker>();
-        expect(loop->isRunning(), isFalse);
-        loop->start();
-        expect(loop->isRunning(), isTrue);
-        loop->stop();
-        expect(loop->isRunning(), isFalse);
-        delete loop;
+        ThreadWrapper<BasicWorker> loop;
+        expect(loop.isRunning(), isFalse);
+        loop.start();
+        expect(loop.isRunning(), isTrue);
+        loop.stop();
+        expect(loop.isRunning(), isFalse);
     });
 
     multiRunTest(TestConfig("Concurrent starts and stops do not break the "
@@ -61,28 +60,26 @@ TEST_CASE(ThreadWrapper, "ThreadWrapper") {
                    .setTimeTicksLimit(10),
                  10,
                  [&] {
-                     constexpr int numWorkers = 100;
-                     constexpr int numOps = 1000;
+                     constexpr int numWorkers = 50;
+                     constexpr int numOps = 200;
 
-                     auto loop = new ThreadWrapper<BasicWorker>();
+                     ThreadWrapper<BasicWorker> loop;
 
-                     vector<thread*> workers(numWorkers, nullptr);
+                     vector<thread> workers;
+                     workers.reserve(numWorkers);
                      for (int i = 0; i < numWorkers; ++i) {
-                         workers[i] = new thread([&] {
+                         workers.emplace_back([&] {
                              for (int j = 0; j < numOps; ++j) {
                                  if (randomBool()) {
-                                     loop->start();
+                                     loop.start();
                                  } else {
-                                     loop->stop();
+                                     loop.stop();
                                  }
                              }
                          });
                      }
                      for (int i = 0; i < numWorkers; ++i) {
-                         workers[i]->join();
-                         delete workers[i];
+                         workers[i].join();
                      }
-
-                     delete loop;
                  });
 }

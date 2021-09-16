@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <concurrentqueue.h>
 
 namespace mcga::threading::base {
@@ -16,10 +18,6 @@ class SPImmediateQueueWrapper {
         queue.enqueue(queueProducerToken, std::move(task));
     }
 
-    ~SPImmediateQueueWrapper() {
-        delete[] buffer;
-    }
-
   protected:
     std::size_t getImmediateQueueSize() const {
         return queue.size_approx() + bufferSize;
@@ -31,12 +29,11 @@ class SPImmediateQueueWrapper {
             return false;
         }
         if (queueSize > bufferCapacity) {
-            delete[] buffer;
             bufferCapacity *= 2;
-            buffer = new Task[bufferCapacity];
+            buffer = std::make_unique<Task[]>(bufferCapacity);
         }
-        bufferSize = queue.try_dequeue_bulk(
-          queueConsumerToken, buffer, bufferCapacity);
+        bufferSize
+          = queue.try_dequeue_bulk(queueConsumerToken, buffer, bufferCapacity);
         for (size_t i = 0; bufferSize > 0; --bufferSize, ++i) {
             processor->executeTask(buffer[i]);
         }
@@ -48,7 +45,7 @@ class SPImmediateQueueWrapper {
     moodycamel::ProducerToken queueProducerToken{queue};
     moodycamel::ConsumerToken queueConsumerToken{queue};
     std::size_t bufferCapacity = kInitialBufferCapacity;
-    Task* buffer = new Task[bufferCapacity];
+    std::unique_ptr<Task[]> buffer = std::make_unique<Task[]>(bufferCapacity);
     std::atomic_size_t bufferSize = 0;
 };
 

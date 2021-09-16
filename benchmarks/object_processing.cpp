@@ -202,15 +202,9 @@ nanoseconds sampleDurationTriple(int numSamples, Thread& th) {
               [i, j = 3 * i, &d] { tripleTask(i, j, &d); });
         } else
 #endif
-          if constexpr (
-            std::is_base_of_v<
-              EventLoopThreadPool,
-              Thread> ) {
+          if constexpr (std::is_base_of_v<EventLoopThreadPool, Thread>) {
             th.enqueue([i, j = 3 * i, &d] { tripleAtomicTask(i, j, &d); });
-        } else if constexpr (
-          std::is_base_of_v<
-            EventLoopThread,
-            Thread> ) {
+        } else if constexpr (std::is_base_of_v<EventLoopThread, Thread>) {
             th.enqueue([i, j = 3 * i, &d] { tripleTask(i, j, &d); });
         } else {
             th.enqueue({i, 3 * i, &d});
@@ -267,17 +261,11 @@ nanoseconds sampleDurationTripleCapture(int numSamples,
               });
         } else
 #endif
-          if constexpr (
-            std::is_base_of_v<
-              EventLoopThreadPool,
-              Thread>) {
+          if constexpr (std::is_base_of_v<EventLoopThreadPool, Thread>) {
             th.enqueue([i, j = 3 * i, &d, &capture1, &capture2, &capture3] {
                 atomicTripleTaskCapture(i, j, &d, capture1, capture2, capture3);
             });
-        } else if constexpr (
-          std::is_base_of_v<
-            EventLoopThread,
-            Thread>) {
+        } else if constexpr (std::is_base_of_v<EventLoopThread, Thread>) {
             th.enqueue([i, j = 3 * i, &d, &capture1, &capture2, &capture3] {
                 tripleTaskCapture(i, j, &d, capture1, capture2, capture3);
             });

@@ -2,6 +2,8 @@
 
 #include <concurrentqueue.h>
 
+#include <memory>
+
 namespace mcga::threading::base {
 
 template<class Processor>
@@ -16,10 +18,6 @@ class ImmediateQueueWrapper {
         queue.enqueue(std::move(task));
     }
 
-    ~ImmediateQueueWrapper() {
-        delete[] buffer;
-    }
-
   protected:
     std::size_t getImmediateQueueSize() const {
         return queue.size_approx() + bufferSize;
@@ -31,12 +29,11 @@ class ImmediateQueueWrapper {
             return false;
         }
         if (queueSize > bufferCapacity) {
-            delete[] buffer;
             bufferCapacity *= 2;
-            buffer = new Task[bufferCapacity];
+            buffer = std::make_unique<Task[]>(bufferCapacity);
         }
         bufferSize
-          = queue.try_dequeue_bulk(queueToken, buffer, bufferCapacity);
+          = queue.try_dequeue_bulk(queueToken, buffer.get(), bufferCapacity);
         for (size_t i = 0; bufferSize > 0; --bufferSize, ++i) {
             processor->executeTask(buffer[i]);
         }
@@ -47,7 +44,7 @@ class ImmediateQueueWrapper {
     moodycamel::ConcurrentQueue<Task> queue;
     moodycamel::ConsumerToken queueToken{queue};
     std::size_t bufferCapacity = kInitialBufferCapacity;
-    Task* buffer = new Task[bufferCapacity];
+    std::unique_ptr<Task[]> buffer = std::make_unique<Task[]>(bufferCapacity);
     std::atomic_size_t bufferSize = 0;
 };
 
