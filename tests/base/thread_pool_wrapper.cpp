@@ -1,5 +1,3 @@
-#pragma ide diagnostic ignored "readability-magic-numbers"
-
 #include <vector>
 
 #include <mcga/test.hpp>
@@ -17,11 +15,6 @@ using mcga::test::test;
 using mcga::test::TestConfig;
 using mcga::threading::base::ThreadPoolWrapper;
 using mcga::threading::testing::randomBool;
-using std::atomic_bool;
-using std::operator""ns;
-using std::size_t;
-using std::thread;
-using std::vector;
 
 namespace {
 
@@ -29,16 +22,16 @@ struct BasicWorker {
     using Processor = int;
     using Task = int;
 
-    volatile int numSpins = 0;
+    std::atomic_int numSpins = 0;
 
     size_t size() const {
         return 0;
     }
 
-    void start(volatile atomic_bool* running, Processor* /*processor*/) {
+    void start(std::atomic_bool* running, Processor* /*processor*/) {
         while (running->load()) {
             numSpins += 1;
-            std::this_thread::sleep_for(20ns);
+            std::this_thread::sleep_for(std::chrono::nanoseconds{20});
         }
     }
 };
@@ -63,9 +56,10 @@ TEST_CASE(ThreadPoolWrapper, "ThreadPoolWrapper") {
                      constexpr int numWorkers = 30;
                      constexpr int numOps = 70;
 
-                     ThreadPoolWrapper<BasicWorker, std::atomic_size_t> loop(8ul);
+                     ThreadPoolWrapper<BasicWorker, std::atomic_size_t> loop(
+                       8ul);
 
-                     vector<thread> workers;
+                     std::vector<std::thread> workers;
                      workers.reserve(numWorkers);
                      for (int i = 0; i < numWorkers; ++i) {
                          workers.emplace_back([&] {

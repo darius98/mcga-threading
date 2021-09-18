@@ -1,5 +1,4 @@
 #pragma once
-#pragma ide diagnostic ignored "readability-magic-numbers"
 
 #include <chrono>
 #include <iomanip>

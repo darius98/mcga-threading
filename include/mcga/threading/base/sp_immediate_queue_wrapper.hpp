@@ -32,8 +32,8 @@ class SPImmediateQueueWrapper {
             bufferCapacity *= 2;
             buffer = std::make_unique<Task[]>(bufferCapacity);
         }
-        bufferSize
-          = queue.try_dequeue_bulk(queueConsumerToken, buffer, bufferCapacity);
+        bufferSize = queue.try_dequeue_bulk(
+          queueConsumerToken, buffer.get(), bufferCapacity);
         for (size_t i = 0; bufferSize > 0; --bufferSize, ++i) {
             processor->executeTask(buffer[i]);
         }

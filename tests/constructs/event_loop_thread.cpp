@@ -1,5 +1,3 @@
-#pragma ide diagnostic ignored "readability-magic-numbers"
-
 #include <algorithm>
 
 #include <mcga/test.hpp>
@@ -27,34 +25,23 @@ using mcga::threading::base::EventLoop;
 using mcga::threading::constructs::EventLoopThreadConstruct;
 using mcga::threading::testing::BasicProcessor;
 using mcga::threading::testing::randomDelay;
-using std::hash;
-using std::ostream;
-using std::sort;
-using std::thread;
-using std::vector;
-using std::chrono::duration_cast;
-using std::chrono::microseconds;
-using std::chrono::milliseconds;
-using std::chrono::nanoseconds;
-using std::chrono::steady_clock;
-using std::operator""ms;
-using std::operator""us;
-namespace this_thread = std::this_thread;
 
 using TestingProcessor = BasicProcessor<int>;
 using EventLoopThread = EventLoopThreadConstruct<TestingProcessor>;
 
-ostream& operator<<(ostream& os, const milliseconds& ms) {
+std::ostream& operator<<(std::ostream& os,
+                         const std::chrono::milliseconds& ms) {
     os << ms.count() << "ms";
     return os;
 }
 
-ostream& operator<<(ostream& os, const microseconds& us) {
+std::ostream& operator<<(std::ostream& os,
+                         const std::chrono::microseconds& us) {
     os << us.count() << "us";
     return os;
 }
 
-ostream& operator<<(ostream& os, const nanoseconds& ns) {
+std::ostream& operator<<(std::ostream& os, const std::chrono::nanoseconds& ns) {
     os << ns.count() << "ns";
     return os;
 }
@@ -82,124 +69,130 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
 
              for (int i = 0; i < numTasks; ++i) {
                  loop->enqueue(task);
-                 loop->enqueueDelayed(task, nanoseconds(numTasks - i));
+                 loop->enqueueDelayed(task,
+                                      std::chrono::nanoseconds(numTasks - i));
              }
 
              while (loop->sizeApprox() > 0) {
-                 this_thread::sleep_for(1ms);
+                 std::this_thread::sleep_for(std::chrono::milliseconds{1});
              }
-             this_thread::sleep_for(10ms);
+             std::this_thread::sleep_for(std::chrono::milliseconds{10});
 
              expect(TestingProcessor::numProcessed(), isEqualTo(2 * numTasks));
              expect(TestingProcessor::objects, eachElement(isEqualTo(task)));
              expect(TestingProcessor::threadIds, hasSize(1));
              expect(*TestingProcessor::threadIds.begin(),
-                    isNotEqualTo(hash<thread::id>()(this_thread::get_id())));
+                    isNotEqualTo(std::hash<std::thread::id>()(
+                      std::this_thread::get_id())));
          });
 
     test("Enqueueing an executable executes it", [&] {
         loop->enqueue(task);
         while (TestingProcessor::numProcessed() == 0) {
-            this_thread::sleep_for(1ms);
+            std::this_thread::sleep_for(std::chrono::milliseconds{1});
         }
-        this_thread::sleep_for(10ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds{10});
         expect(TestingProcessor::numProcessed(), isEqualTo(1));
         expect(TestingProcessor::objects[0], isEqualTo(task));
     });
 
     test("Enqueueing an executable delayed executes it", [&] {
-        loop->enqueueDelayed(task, 1ms);
+        loop->enqueueDelayed(task, std::chrono::milliseconds{1});
         while (TestingProcessor::numProcessed() == 0) {
-            this_thread::sleep_for(1ms);
+            std::this_thread::sleep_for(std::chrono::milliseconds{1});
         }
-        this_thread::sleep_for(10ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds{10});
         expect(TestingProcessor::numProcessed(), isEqualTo(1));
         expect(TestingProcessor::objects[0], isEqualTo(task));
     });
 
     test("Enqueueing an executable interval executes it multiple times", [&] {
-        vector<nanoseconds> executionDelays;
-        steady_clock::time_point startTime = steady_clock::now();
-        loop->enqueueInterval(task, 10ms);
+        std::vector<std::chrono::nanoseconds> executionDelays;
+        auto startTime = std::chrono::steady_clock::now();
+        loop->enqueueInterval(task, std::chrono::milliseconds{10});
         TestingProcessor::afterHandle = [&] {
-            executionDelays.push_back(
-              duration_cast<nanoseconds>(steady_clock::now() - startTime));
+            executionDelays.push_back(duration_cast<std::chrono::nanoseconds>(
+              std::chrono::steady_clock::now() - startTime));
         };
 
         while (executionDelays.size() < 10) {
-            this_thread::sleep_for(5ms);
+            std::this_thread::sleep_for(std::chrono::milliseconds{5});
         }
         expect(executionDelays, hasSize(10));
         expect(TestingProcessor::numProcessed(), isEqualTo(10));
         expect(TestingProcessor::objects, eachElement(isEqualTo(task)));
         for (size_t i = 1; i < executionDelays.size(); ++i) {
             expect(executionDelays[i] - executionDelays[i - 1],
-                   isGreaterThanEqual(10ms));
+                   isGreaterThanEqual(std::chrono::milliseconds{10}));
         }
     });
 
     test("Delayed executions are executed in the expected order", [&] {
-        loop->enqueueDelayed(1, 100ms);
-        loop->enqueueDelayed(2, 500ms);
-        loop->enqueueDelayed(3, 400ms);
-        loop->enqueueDelayed(4, 200ms);
-        loop->enqueueDelayed(5, 300ms);
+        loop->enqueueDelayed(1, std::chrono::milliseconds{100});
+        loop->enqueueDelayed(2, std::chrono::milliseconds{500});
+        loop->enqueueDelayed(3, std::chrono::milliseconds{400});
+        loop->enqueueDelayed(4, std::chrono::milliseconds{200});
+        loop->enqueueDelayed(5, std::chrono::milliseconds{300});
 
         while (TestingProcessor::objects.size() < 5) {
-            this_thread::sleep_for(5ms);
+            std::this_thread::sleep_for(std::chrono::milliseconds{5});
         }
-        this_thread::sleep_for(100ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds{100});
         expect(TestingProcessor::objects,
-               isEqualTo(vector<int>{1, 4, 5, 3, 2}));
+               isEqualTo(std::vector<int>{1, 4, 5, 3, 2}));
     });
 
     test("Cancelling a delayed invocation", [&] {
-        auto invocation = loop->enqueueDelayed(task, 1ms);
+        auto invocation
+          = loop->enqueueDelayed(task, std::chrono::milliseconds{1});
 
         invocation->cancel();
 
-        this_thread::sleep_for(10ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds{10});
         expect(TestingProcessor::numProcessed(), isZero);
     });
 
     test("Cancelling an interval", [&] {
-        auto invocation = loop->enqueueInterval(task, 50ms);
+        auto invocation
+          = loop->enqueueInterval(task, std::chrono::milliseconds{50});
 
         while (TestingProcessor::numProcessed() < 3) {
-            this_thread::sleep_for(1ms);
+            std::this_thread::sleep_for(std::chrono::milliseconds{1});
         }
 
         invocation->cancel();
 
-        this_thread::sleep_for(200ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds{200});
         expect(TestingProcessor::numProcessed(), isEqualTo(3));
     });
 
     test("Cancelling an interval within the interval", [&] {
-        auto invocation = loop->enqueueInterval(task, 10ms);
+        auto invocation
+          = loop->enqueueInterval(task, std::chrono::milliseconds{10});
         TestingProcessor::afterHandle = [&] { invocation->cancel(); };
 
         while (TestingProcessor::numProcessed() < 1) {
-            this_thread::sleep_for(1ms);
+            std::this_thread::sleep_for(std::chrono::milliseconds{1});
         }
-        this_thread::sleep_for(100ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds{100});
         expect(TestingProcessor::numProcessed(), isEqualTo(1));
     });
 
     test("A delayed invocation will still execute even if immediate "
          "invocations keep getting added to the queue",
          [&] {
-             auto limit = steady_clock::now() + 100ms;
+             auto limit = std::chrono::steady_clock::now()
+               + std::chrono::milliseconds{100};
 
              loop->enqueue(1);
              TestingProcessor::afterHandle = [&] {
-                 if (steady_clock::now() <= limit) {
+                 if (std::chrono::steady_clock::now() <= limit) {
                      loop->enqueue(1);
                  }
              };
-             loop->enqueueDelayed(2, 5ms);
+             loop->enqueueDelayed(2, std::chrono::milliseconds{5});
 
-             this_thread::sleep_for(500ms);
+             std::this_thread::sleep_for(std::chrono::milliseconds{500});
 
              expect(TestingProcessor::objects, anyElement(isEqualTo(2)));
          });
@@ -212,7 +205,7 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
                      constexpr int numWorkers = 100;
                      constexpr int numWorkerJobs = 1000;
 
-                     vector<thread> workers;
+                     std::vector<std::thread> workers;
                      workers.reserve(numWorkers);
                      for (int i = 0; i < numWorkers; ++i) {
                          workers.emplace_back([&loop, i] {
@@ -227,9 +220,10 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
                      }
                      while (TestingProcessor::numProcessed()
                             < numWorkers * numWorkerJobs) {
-                         this_thread::sleep_for(1ms);
+                         std::this_thread::sleep_for(
+                           std::chrono::milliseconds{1});
                      }
-                     this_thread::sleep_for(50ms);
+                     std::this_thread::sleep_for(std::chrono::milliseconds{50});
                      expect(TestingProcessor::numProcessed(),
                             isEqualTo(numWorkers * numWorkerJobs));
                      sort(TestingProcessor::objects.begin(),
@@ -245,15 +239,16 @@ TEST_CASE(EventLoopThread, "EventLoopThread") {
          [&] {
              constexpr int numSamples = 200;
              for (int i = 0; i < numSamples; ++i) {
-                 nanoseconds expected = 2ms;
-                 auto startTime = steady_clock::now();
-                 nanoseconds actual(0);
-                 loop->enqueueDelayed(task, 2ms);
-                 TestingProcessor::afterHandle
-                   = [&] { actual = steady_clock::now() - startTime; };
+                 const auto expected = std::chrono::milliseconds{2};
+                 auto startTime = std::chrono::steady_clock::now();
+                 std::chrono::nanoseconds actual(0);
+                 loop->enqueueDelayed(task, std::chrono::milliseconds{2});
+                 TestingProcessor::afterHandle = [&] {
+                     actual = std::chrono::steady_clock::now() - startTime;
+                 };
 
                  while (actual.count() == 0) {
-                     this_thread::sleep_for(10us);
+                     std::this_thread::sleep_for(std::chrono::microseconds{10});
                  }
 
                  expect(actual, isGreaterThanEqual(expected));

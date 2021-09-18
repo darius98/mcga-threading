@@ -1,29 +1,21 @@
-#pragma ide diagnostic ignored "readability-magic-numbers"
-
 #include <iostream>
 
 #include <mcga/threading.hpp>
 
 using mcga::threading::constructs::EventLoopThreadConstruct;
 using mcga::threading::constructs::EventLoopThreadPoolConstruct;
-using std::operator""ms;
-using std::cout;
-using std::endl;
-using std::make_unique;
-using std::mutex;
-using std::unique_ptr;
 
 class Processor {
   public:
-    using Task = unique_ptr<int>;
+    using Task = std::unique_ptr<int>;
 
-    mutex printMutex;
+    std::mutex printMutex;
 
     void executeTask(const Task& task) {
         std::lock_guard guard(printMutex);
-        cout << "Processing " << *task << " on thread "
-             << std::hash<std::thread::id>()(std::this_thread::get_id())
-             << endl;
+        std::cout << "Processing " << *task << " on thread "
+                  << std::hash<std::thread::id>()(std::this_thread::get_id())
+                  << std::endl;
     }
 };
 using OwnEventLoopThread = EventLoopThreadConstruct<Processor>;
@@ -33,24 +25,26 @@ int main() {
     OwnEventLoopThread loop;
 
     loop.start();
-    loop.enqueueDelayed(make_unique<int>(300), 300ms);
+    loop.enqueueDelayed(std::make_unique<int>(300),
+                        std::chrono::milliseconds{300});
     for (int i = 1; i <= 100; ++i) {
-        loop.enqueue(make_unique<int>(i));
+        loop.enqueue(std::make_unique<int>(i));
     }
 
-    std::this_thread::sleep_for(1000ms);
+    std::this_thread::sleep_for(std::chrono::seconds{1});
 
     loop.stop();
 
     OwnEventLoopThreadPool pool;
 
     pool.start();
-    pool.enqueueDelayed(make_unique<int>(300), 300ms);
+    pool.enqueueDelayed(std::make_unique<int>(300),
+                        std::chrono::milliseconds{300});
     for (int i = 1; i <= 100; ++i) {
-        pool.enqueue(make_unique<int>(i));
+        pool.enqueue(std::make_unique<int>(i));
     }
 
-    std::this_thread::sleep_for(1000ms);
+    std::this_thread::sleep_for(std::chrono::seconds{1});
 
     pool.stop();
 

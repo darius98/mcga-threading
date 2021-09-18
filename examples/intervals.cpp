@@ -1,33 +1,30 @@
-#pragma ide diagnostic ignored "readability-magic-numbers"
-
 #include <iostream>
 
 #include <mcga/threading.hpp>
 
 using mcga::threading::EventLoopThread;
-using std::operator""ms;
-using std::operator""s;
-using std::cout;
 
 int main() {
     EventLoopThread loop;
 
     loop.start();
     loop.enqueueDelayed(
-      []() { cout << "This message appears after 2 seconds.\n"; }, 2s);
+      []() { std::cout << "This message appears after 2 seconds.\n"; },
+      std::chrono::seconds{2});
     loop.enqueueInterval(
       [&loop]() {
-          cout << "This message appears every second.\n";
+          std::cout << "This message appears every second.\n";
           loop.enqueue([]() {
-              cout
+              std::cout
                 << "This message appears right after the every-second one.\n";
           });
       },
-      1s);
+      std::chrono::seconds{1});
     loop.enqueueInterval(
-      []() { cout << "This message appears every 750ms.\n"; }, 750ms);
+      []() { std::cout << "This message appears every 750ms.\n"; },
+      std::chrono::milliseconds{750});
 
-    std::this_thread::sleep_for(30s);
+    std::this_thread::sleep_for(std::chrono::seconds{30});
 
     loop.stop();
 

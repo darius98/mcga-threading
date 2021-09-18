@@ -1,26 +1,23 @@
-#pragma ide diagnostic ignored "readability-magic-numbers"
-
 #include <iostream>
 
 #include <mcga/threading.hpp>
 
 using mcga::threading::ObjectEventLoopThread;
-using std::operator""ms;
-using std::cout;
-using std::make_unique;
-using std::unique_ptr;
 
 int main() {
-    ObjectEventLoopThread<unique_ptr<int>> loop(
-      [](unique_ptr<int>& obj) { cout << "Processing " << *obj << "\n"; });
+    ObjectEventLoopThread<std::unique_ptr<int>> loop(
+      [](std::unique_ptr<int>& obj) {
+          std::cout << "Processing " << *obj << "\n";
+      });
 
     loop.start();
-    loop.enqueueDelayed(make_unique<int>(300), 300ms);
+    loop.enqueueDelayed(std::make_unique<int>(300),
+                        std::chrono::milliseconds{300});
     for (int i = 1; i <= 100; ++i) {
-        loop.enqueue(make_unique<int>(i));
+        loop.enqueue(std::make_unique<int>(i));
     }
 
-    std::this_thread::sleep_for(1000ms);
+    std::this_thread::sleep_for(std::chrono::seconds{1});
 
     loop.stop();
 

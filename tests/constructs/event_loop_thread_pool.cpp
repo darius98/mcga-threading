@@ -1,5 +1,3 @@
-#pragma ide diagnostic ignored "readability-magic-numbers"
-
 #include <vector>
 
 #include <mcga/test.hpp>
@@ -22,12 +20,6 @@ using mcga::threading::constructs::EventLoopThreadPoolConstruct;
 using mcga::threading::testing::BasicProcessor;
 using mcga::threading::testing::randomBool;
 using mcga::threading::testing::randomDelay;
-using std::atomic_int;
-using std::hash;
-using std::operator""ms;
-using std::thread;
-using std::vector;
-namespace this_thread = std::this_thread;
 
 using TestingProcessor = BasicProcessor<int>;
 using EventLoopThreadPool = EventLoopThreadPoolConstruct<TestingProcessor>;
@@ -45,19 +37,19 @@ TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
 
           for (int i = 0; i < numTasks; ++i) {
               pool.enqueue(1);
-              pool.enqueueDelayed(1, 3ms);
+              pool.enqueueDelayed(1, std::chrono::milliseconds{3});
           }
 
           while (TestingProcessor::numProcessed() != 2 * numTasks) {
-              this_thread::sleep_for(1ms);
+              std::this_thread::sleep_for(std::chrono::milliseconds{1});
           }
-          this_thread::sleep_for(100ms);
+          std::this_thread::sleep_for(std::chrono::milliseconds{100});
 
           expect(TestingProcessor::numProcessed(), isEqualTo(2 * numTasks));
           expect(TestingProcessor::threadIds, hasSize(3));
           expect(TestingProcessor::threadIds,
-                 eachElement(
-                   isNotEqualTo(hash<thread::id>()(this_thread::get_id()))));
+                 eachElement(isNotEqualTo(
+                   std::hash<std::thread::id>()(std::this_thread::get_id()))));
           TestingProcessor::reset();
           pool.stop();
       });
@@ -74,7 +66,7 @@ TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
           EventLoopThreadPool pool(EventLoopThreadPool::NumThreads(3));
           pool.start();
 
-          vector<thread> workers;
+          std::vector<std::thread> workers;
           workers.reserve(numWorkers);
           for (int i = 0; i < numWorkers; ++i) {
               workers.emplace_back([&] {
@@ -93,16 +85,16 @@ TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
 
           while (TestingProcessor::numProcessed()
                  != numWorkers * numWorkerJobs) {
-              this_thread::sleep_for(1ms);
+              std::this_thread::sleep_for(std::chrono::milliseconds{1});
           }
-          this_thread::sleep_for(100ms);
+          std::this_thread::sleep_for(std::chrono::milliseconds{100});
 
           expect(TestingProcessor::numProcessed(),
                  isEqualTo(numWorkers * numWorkerJobs));
           expect(TestingProcessor::threadIds, hasSize(3));
           expect(TestingProcessor::threadIds,
-                 eachElement(
-                   isNotEqualTo(hash<thread::id>()(this_thread::get_id()))));
+                 eachElement(isNotEqualTo(
+                   std::hash<std::thread::id>()(std::this_thread::get_id()))));
           TestingProcessor::reset();
           pool.stop();
       });
