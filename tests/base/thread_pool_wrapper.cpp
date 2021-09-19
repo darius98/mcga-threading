@@ -38,7 +38,7 @@ struct BasicWorker {
 
 }  // namespace
 
-TEST_CASE(ThreadPoolWrapper, "ThreadPoolWrapper") {
+TEST_CASE("ThreadPoolWrapper") {
     test("Starting and stopping ThreadPoolWrapper", [&] {
         ThreadPoolWrapper<BasicWorker, std::atomic_size_t> loop(8ul);
         expect(loop.isRunning(), isFalse);

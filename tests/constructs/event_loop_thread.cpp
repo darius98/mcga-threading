@@ -46,7 +46,7 @@ std::ostream& operator<<(std::ostream& os, const std::chrono::nanoseconds& ns) {
     return os;
 }
 
-TEST_CASE(EventLoopThread, "EventLoopThread") {
+TEST_CASE("EventLoopThread") {
     constexpr int task = 1;
 
     std::unique_ptr<EventLoopThread> loop;

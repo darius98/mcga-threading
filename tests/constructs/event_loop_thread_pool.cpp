@@ -24,7 +24,7 @@ using mcga::threading::testing::randomDelay;
 using TestingProcessor = BasicProcessor<int>;
 using EventLoopThreadPool = EventLoopThreadPoolConstruct<TestingProcessor>;
 
-TEST_CASE(EventLoopThreadPool, "EventLoopThreadPool") {
+TEST_CASE("EventLoopThreadPool") {
     multiRunTest(
       "Tasks enqueued in a EventLoopThreadPool are executed on "
       "multiple threads, different from the main thread",

@@ -38,7 +38,7 @@ struct BasicWorker {
 
 }  // namespace
 
-TEST_CASE(ThreadWrapper, "ThreadWrapper") {
+TEST_CASE("ThreadWrapper") {
     test("Starting and stopping thread wrapper", [&] {
         ThreadWrapper<BasicWorker> loop;
         expect(loop.isRunning(), isFalse);
