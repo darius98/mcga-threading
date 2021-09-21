@@ -10,7 +10,6 @@
 using mcga::matchers::isFalse;
 using mcga::matchers::isTrue;
 using mcga::test::expect;
-using mcga::test::multiRunTest;
 using mcga::test::test;
 using mcga::test::TestConfig;
 using mcga::threading::base::ThreadPoolWrapper;
@@ -48,32 +47,32 @@ TEST_CASE("ThreadPoolWrapper") {
         expect(loop.isRunning(), isFalse);
     });
 
-    multiRunTest(TestConfig("Concurrent starts and stops do not break the "
-                            "ThreadPoolWrapper")
-                   .setTimeTicksLimit(10),
-                 10,
-                 [&] {
-                     constexpr int numWorkers = 30;
-                     constexpr int numOps = 70;
+    test.multiRun(10,
+                  TestConfig("Concurrent starts and stops do not break the "
+                             "ThreadPoolWrapper")
+                    .setTimeTicksLimit(10),
+                  [&] {
+                      constexpr int numWorkers = 30;
+                      constexpr int numOps = 70;
 
-                     ThreadPoolWrapper<BasicWorker, std::atomic_size_t> loop(
-                       8ul);
+                      ThreadPoolWrapper<BasicWorker, std::atomic_size_t> loop(
+                        8ul);
 
-                     std::vector<std::thread> workers;
-                     workers.reserve(numWorkers);
-                     for (int i = 0; i < numWorkers; ++i) {
-                         workers.emplace_back([&] {
-                             for (int j = 0; j < numOps; ++j) {
-                                 if (randomBool()) {
-                                     loop.start();
-                                 } else {
-                                     loop.stop();
-                                 }
-                             }
-                         });
-                     }
-                     for (int i = 0; i < numWorkers; ++i) {
-                         workers[i].join();
-                     }
-                 });
+                      std::vector<std::thread> workers;
+                      workers.reserve(numWorkers);
+                      for (int i = 0; i < numWorkers; ++i) {
+                          workers.emplace_back([&] {
+                              for (int j = 0; j < numOps; ++j) {
+                                  if (randomBool()) {
+                                      loop.start();
+                                  } else {
+                                      loop.stop();
+                                  }
+                              }
+                          });
+                      }
+                      for (int i = 0; i < numWorkers; ++i) {
+                          workers[i].join();
+                      }
+                  });
 }

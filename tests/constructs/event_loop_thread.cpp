@@ -197,41 +197,41 @@ TEST_CASE("EventLoopThread") {
              expect(TestingProcessor::objects, anyElement(isEqualTo(2)));
          });
 
-    multiRunTest(TestConfig("Enqueueing delayed executables from different "
-                            "threads")
-                   .setTimeTicksLimit(10),
-                 10,
-                 [&] {
-                     constexpr int numWorkers = 100;
-                     constexpr int numWorkerJobs = 1000;
+    test.multiRun(
+      10,
+      TestConfig("Enqueueing delayed executables from different "
+                 "threads")
+        .setTimeTicksLimit(10),
+      [&] {
+          constexpr int numWorkers = 100;
+          constexpr int numWorkerJobs = 1000;
 
-                     std::vector<std::thread> workers;
-                     workers.reserve(numWorkers);
-                     for (int i = 0; i < numWorkers; ++i) {
-                         workers.emplace_back([&loop, i] {
-                             for (int j = 0; j < numWorkerJobs; ++j) {
-                                 loop->enqueueDelayed(i * numWorkerJobs + j,
-                                                      randomDelay());
-                             }
-                         });
-                     }
-                     for (int i = 0; i < numWorkers; ++i) {
-                         workers[i].join();
-                     }
-                     while (TestingProcessor::numProcessed()
-                            < numWorkers * numWorkerJobs) {
-                         std::this_thread::sleep_for(
-                           std::chrono::milliseconds{1});
-                     }
-                     std::this_thread::sleep_for(std::chrono::milliseconds{50});
-                     expect(TestingProcessor::numProcessed(),
-                            isEqualTo(numWorkers * numWorkerJobs));
-                     sort(TestingProcessor::objects.begin(),
-                          TestingProcessor::objects.end());
-                     for (int i = 0; i < numWorkers * numWorkerJobs; ++i) {
-                         expect(TestingProcessor::objects[i], isEqualTo(i));
-                     }
-                 });
+          std::vector<std::thread> workers;
+          workers.reserve(numWorkers);
+          for (int i = 0; i < numWorkers; ++i) {
+              workers.emplace_back([&loop, i] {
+                  for (int j = 0; j < numWorkerJobs; ++j) {
+                      loop->enqueueDelayed(i * numWorkerJobs + j,
+                                           randomDelay());
+                  }
+              });
+          }
+          for (int i = 0; i < numWorkers; ++i) {
+              workers[i].join();
+          }
+          while (TestingProcessor::numProcessed()
+                 < numWorkers * numWorkerJobs) {
+              std::this_thread::sleep_for(std::chrono::milliseconds{1});
+          }
+          std::this_thread::sleep_for(std::chrono::milliseconds{50});
+          expect(TestingProcessor::numProcessed(),
+                 isEqualTo(numWorkers * numWorkerJobs));
+          sort(TestingProcessor::objects.begin(),
+               TestingProcessor::objects.end());
+          for (int i = 0; i < numWorkers * numWorkerJobs; ++i) {
+              expect(TestingProcessor::objects[i], isEqualTo(i));
+          }
+      });
 
     test(TestConfig("A delayed invocation is never executed before "
                     "a period at least equal to its delay has passed")

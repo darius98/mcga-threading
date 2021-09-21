@@ -13,9 +13,9 @@ using mcga::matchers::hasSize;
 using mcga::matchers::isEqualTo;
 using mcga::matchers::isNotEqualTo;
 using mcga::test::expect;
-using mcga::test::multiRunTest;
 using mcga::test::setUp;
 using mcga::test::tearDown;
+using mcga::test::test;
 using mcga::threading::constructs::EventLoopThreadPoolConstruct;
 using mcga::threading::testing::BasicProcessor;
 using mcga::threading::testing::randomBool;
@@ -25,10 +25,10 @@ using TestingProcessor = BasicProcessor<int>;
 using EventLoopThreadPool = EventLoopThreadPoolConstruct<TestingProcessor>;
 
 TEST_CASE("EventLoopThreadPool") {
-    multiRunTest(
+    test.multiRun(
+      10,
       "Tasks enqueued in a EventLoopThreadPool are executed on "
       "multiple threads, different from the main thread",
-      10,
       [&] {
           constexpr int numTasks = 100000;
 
@@ -54,11 +54,11 @@ TEST_CASE("EventLoopThreadPool") {
           pool.stop();
       });
 
-    multiRunTest(
+    test.multiRun(
+      10,
       "Tasks enqueued from multiple threads in a EventLoopThreadPool"
       " are executed on multiple threads, different from the main "
       "thread",
-      10,
       [&] {
           constexpr int numWorkers = 100;
           constexpr int numWorkerJobs = 1000;
