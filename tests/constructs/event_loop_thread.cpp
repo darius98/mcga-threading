@@ -199,9 +199,9 @@ TEST_CASE("EventLoopThread") {
 
     test.multiRun(
       10,
-      TestConfig("Enqueueing delayed executables from different "
-                 "threads")
-        .setTimeTicksLimit(10),
+      TestConfig{.description = "Enqueueing delayed executables from different "
+                                "threads",
+                 .timeTicksLimit = 10},
       [&] {
           constexpr int numWorkers = 100;
           constexpr int numWorkerJobs = 1000;
@@ -233,9 +233,10 @@ TEST_CASE("EventLoopThread") {
           }
       });
 
-    test(TestConfig("A delayed invocation is never executed before "
-                    "a period at least equal to its delay has passed")
-           .setTimeTicksLimit(10),
+    test(TestConfig{.description
+                    = "A delayed invocation is never executed before "
+                      "a period at least equal to its delay has passed",
+                    .timeTicksLimit = 10},
          [&] {
              constexpr int numSamples = 200;
              for (int i = 0; i < numSamples; ++i) {

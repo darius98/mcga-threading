@@ -48,9 +48,10 @@ TEST_CASE("ThreadWrapper") {
     });
 
     test.multiRun(10,
-                  TestConfig("Concurrent starts and stops do not break the "
-                             "ThreadWrapper")
-                    .setTimeTicksLimit(10),
+                  TestConfig{.description
+                             = "Concurrent starts and stops do not break the "
+                               "ThreadWrapper",
+                             .timeTicksLimit = 10},
                   [&] {
                       constexpr int numWorkers = 50;
                       constexpr int numOps = 200;
