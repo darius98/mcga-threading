@@ -78,15 +78,23 @@ std::chrono::nanoseconds sampleDuration(int numSamples, Thread& th) {
     for (int i = 0; i < numSamples; ++i) {
 #ifdef LINK_EVPP
         if constexpr (std::is_same_v<evpp::EventLoopThreadPool, Thread>) {
-            th.GetNextLoop()->QueueInLoop([i] { atomicTask(i); });
+            th.GetNextLoop()->QueueInLoop([i] {
+                atomicTask(i);
+            });
         } else if constexpr (std::is_same_v<evpp::EventLoopThread, Thread>) {
-            th.loop()->QueueInLoop([i] { task(i); });
+            th.loop()->QueueInLoop([i] {
+                task(i);
+            });
         } else
 #endif
           if constexpr (std::is_base_of_v<EventLoopThreadPool, Thread>) {
-            th.enqueue([i] { atomicTask(i); });
+            th.enqueue([i] {
+                atomicTask(i);
+            });
         } else if constexpr (std::is_base_of_v<EventLoopThread, Thread>) {
-            th.enqueue([i] { task(i); });
+            th.enqueue([i] {
+                task(i);
+            });
         } else {
             th.enqueue(i);
         }
@@ -184,17 +192,23 @@ std::chrono::nanoseconds sampleDurationTriple(int numSamples, Thread& th) {
     for (int i = 0; i < numSamples; ++i) {
 #ifdef LINK_EVPP
         if constexpr (std::is_same_v<evpp::EventLoopThreadPool, Thread>) {
-            th.GetNextLoop()->QueueInLoop(
-              [i, j = 3 * i, &d] { tripleAtomicTask(i, j, &d); });
+            th.GetNextLoop()->QueueInLoop([i, j = 3 * i, &d] {
+                tripleAtomicTask(i, j, &d);
+            });
         } else if constexpr (std::is_same_v<evpp::EventLoopThread, Thread>) {
-            th.loop()->QueueInLoop(
-              [i, j = 3 * i, &d] { tripleTask(i, j, &d); });
+            th.loop()->QueueInLoop([i, j = 3 * i, &d] {
+                tripleTask(i, j, &d);
+            });
         } else
 #endif
           if constexpr (std::is_base_of_v<EventLoopThreadPool, Thread>) {
-            th.enqueue([i, j = 3 * i, &d] { tripleAtomicTask(i, j, &d); });
+            th.enqueue([i, j = 3 * i, &d] {
+                tripleAtomicTask(i, j, &d);
+            });
         } else if constexpr (std::is_base_of_v<EventLoopThread, Thread>) {
-            th.enqueue([i, j = 3 * i, &d] { tripleTask(i, j, &d); });
+            th.enqueue([i, j = 3 * i, &d] {
+                tripleTask(i, j, &d);
+            });
         } else {
             th.enqueue({i, 3 * i, &d});
         }

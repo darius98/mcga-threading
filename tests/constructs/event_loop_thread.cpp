@@ -170,7 +170,9 @@ static auto t = TestCase{"EventLoopThread"} + [] {
     test("Cancelling an interval within the interval", [&] {
         auto invocation
           = loop->enqueueInterval(task, std::chrono::milliseconds{10});
-        TestingProcessor::afterHandle = [&] { invocation->cancel(); };
+        TestingProcessor::afterHandle = [&] {
+            invocation->cancel();
+        };
 
         while (TestingProcessor::numProcessed() < 1) {
             std::this_thread::sleep_for(std::chrono::milliseconds{1});

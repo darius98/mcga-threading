@@ -9,7 +9,9 @@ int main() {
 
     loop.start();
     loop.enqueueDelayed(
-      []() { std::cout << "This message appears after 2 seconds.\n"; },
+      []() {
+          std::cout << "This message appears after 2 seconds.\n";
+      },
       std::chrono::seconds{2});
     loop.enqueueInterval(
       [&loop]() {
@@ -21,7 +23,9 @@ int main() {
       },
       std::chrono::seconds{1});
     loop.enqueueInterval(
-      []() { std::cout << "This message appears every 750ms.\n"; },
+      []() {
+          std::cout << "This message appears every 750ms.\n";
+      },
       std::chrono::milliseconds{750});
 
     std::this_thread::sleep_for(std::chrono::seconds{30});

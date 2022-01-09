@@ -106,10 +106,12 @@ int main(int argc, char** argv) {
     int capture = 1;
     std::vector<int> capture2(30, 0);
     double capture3 = 3.14;
-    auto capturingLambda
-      = [&capture, capture2, &capture3] { tasksExecuted += capture; };
-    auto atomicCapturingLambda
-      = [&capture, capture2, &capture3] { atomicTasksExecuted += capture; };
+    auto capturingLambda = [&capture, capture2, &capture3] {
+        tasksExecuted += capture;
+    };
+    auto atomicCapturingLambda = [&capture, capture2, &capture3] {
+        atomicTasksExecuted += capture;
+    };
 
     auto parameterLambda =
       [](int& capture, std::vector<int> /*unused*/, const double& /*unused*/) {
