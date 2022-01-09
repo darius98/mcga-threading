@@ -16,6 +16,7 @@ using mcga::test::expect;
 using mcga::test::setUp;
 using mcga::test::tearDown;
 using mcga::test::test;
+using mcga::test::TestCase;
 using mcga::threading::constructs::EventLoopThreadPoolConstruct;
 using mcga::threading::testing::BasicProcessor;
 using mcga::threading::testing::randomBool;
@@ -24,7 +25,7 @@ using mcga::threading::testing::randomDelay;
 using TestingProcessor = BasicProcessor<int>;
 using EventLoopThreadPool = EventLoopThreadPoolConstruct<TestingProcessor>;
 
-TEST_CASE("EventLoopThreadPool") {
+static auto t = TestCase{"EventLoopThreadPool"} + [] {
     test.multiRun(
       10,
       "Tasks enqueued in a EventLoopThreadPool are executed on "
@@ -98,4 +99,4 @@ TEST_CASE("EventLoopThreadPool") {
           TestingProcessor::reset();
           pool.stop();
       });
-}
+};

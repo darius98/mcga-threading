@@ -20,6 +20,7 @@ using mcga::test::expect;
 using mcga::test::setUp;
 using mcga::test::tearDown;
 using mcga::test::test;
+using mcga::test::TestCase;
 using mcga::test::TestConfig;
 using mcga::threading::base::EventLoop;
 using mcga::threading::constructs::EventLoopThreadConstruct;
@@ -46,7 +47,7 @@ std::ostream& operator<<(std::ostream& os, const std::chrono::nanoseconds& ns) {
     return os;
 }
 
-TEST_CASE("EventLoopThread") {
+static auto t = TestCase{"EventLoopThread"} + [] {
     constexpr int task = 1;
 
     std::unique_ptr<EventLoopThread> loop;
@@ -255,4 +256,4 @@ TEST_CASE("EventLoopThread") {
                  expect(actual, isGreaterThanEqual(expected));
              }
          });
-}
+};
