@@ -21,7 +21,6 @@ using mcga::test::setUp;
 using mcga::test::tearDown;
 using mcga::test::test;
 using mcga::test::TestCase;
-using mcga::test::TestConfig;
 using mcga::threading::base::EventLoop;
 using mcga::threading::constructs::EventLoopThreadConstruct;
 using mcga::threading::testing::BasicProcessor;
@@ -200,11 +199,14 @@ static auto t = TestCase{"EventLoopThread"} + [] {
              expect(TestingProcessor::objects, anyElement(isEqualTo(2)));
          });
 
-    test.multiRun(
-      10,
-      TestConfig{.description = "Enqueueing delayed executables from different "
-                                "threads",
-                 .timeTicksLimit = 10},
+    test(
+      {
+        .description = "Enqueueing delayed executables from different "
+                       "threads",
+        .timeTicksLimit = 10,
+        .attempts = 10,
+        .requiredPassedAttempts = 10,
+      },
       [&] {
           constexpr int numWorkers = 100;
           constexpr int numWorkerJobs = 1000;
@@ -236,10 +238,9 @@ static auto t = TestCase{"EventLoopThread"} + [] {
           }
       });
 
-    test(TestConfig{.description
-                    = "A delayed invocation is never executed before "
-                      "a period at least equal to its delay has passed",
-                    .timeTicksLimit = 10},
+    test({.description = "A delayed invocation is never executed before "
+                         "a period at least equal to its delay has passed",
+          .timeTicksLimit = 10},
          [&] {
              constexpr int numSamples = 200;
              for (int i = 0; i < numSamples; ++i) {

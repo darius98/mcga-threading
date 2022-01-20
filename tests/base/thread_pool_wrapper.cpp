@@ -12,7 +12,6 @@ using mcga::matchers::isTrue;
 using mcga::test::expect;
 using mcga::test::test;
 using mcga::test::TestCase;
-using mcga::test::TestConfig;
 using mcga::threading::base::ThreadPoolWrapper;
 using mcga::threading::testing::randomBool;
 
@@ -48,11 +47,14 @@ static auto t = TestCase{"ThreadPoolWrapper"} + [] {
         expect(loop.isRunning(), isFalse);
     });
 
-    test.multiRun(
-      10,
-      TestConfig{.description = "Concurrent starts and stops do not break the "
-                                "ThreadPoolWrapper",
-                 .timeTicksLimit = 10},
+    test(
+      {
+        .description = "Concurrent starts and stops do not break the "
+                       "ThreadPoolWrapper",
+        .timeTicksLimit = 10,
+        .attempts = 10,
+        .requiredPassedAttempts = 10,
+      },
       [&] {
           constexpr int numWorkers = 30;
           constexpr int numOps = 70;

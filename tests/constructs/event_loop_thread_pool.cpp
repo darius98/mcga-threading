@@ -26,10 +26,14 @@ using TestingProcessor = BasicProcessor<int>;
 using EventLoopThreadPool = EventLoopThreadPoolConstruct<TestingProcessor>;
 
 static auto t = TestCase{"EventLoopThreadPool"} + [] {
-    test.multiRun(
-      10,
-      "Tasks enqueued in a EventLoopThreadPool are executed on "
-      "multiple threads, different from the main thread",
+    test(
+      {
+        .description
+        = "Tasks enqueued in a EventLoopThreadPool are executed on "
+          "multiple threads, different from the main thread",
+        .attempts = 10,
+        .requiredPassedAttempts = 10,
+      },
       [&] {
           constexpr int numTasks = 100000;
 
@@ -55,48 +59,49 @@ static auto t = TestCase{"EventLoopThreadPool"} + [] {
           pool.stop();
       });
 
-    test.multiRun(
-      10,
-      "Tasks enqueued from multiple threads in a EventLoopThreadPool"
-      " are executed on multiple threads, different from the main "
-      "thread",
-      [&] {
-          constexpr int numWorkers = 100;
-          constexpr int numWorkerJobs = 1000;
+    test({.description
+          = "Tasks enqueued from multiple threads in a EventLoopThreadPool"
+            " are executed on multiple threads, different from the main "
+            "thread",
+          .attempts = 10,
+          .requiredPassedAttempts = 10},
+         [&] {
+             constexpr int numWorkers = 100;
+             constexpr int numWorkerJobs = 1000;
 
-          EventLoopThreadPool pool(EventLoopThreadPool::NumThreads(3));
-          pool.start();
+             EventLoopThreadPool pool(EventLoopThreadPool::NumThreads(3));
+             pool.start();
 
-          std::vector<std::thread> workers;
-          workers.reserve(numWorkers);
-          for (int i = 0; i < numWorkers; ++i) {
-              workers.emplace_back([&] {
-                  for (int j = 0; j < numWorkerJobs; ++j) {
-                      if (randomBool()) {
-                          pool.enqueueDelayed(1, randomDelay());
-                      } else {
-                          pool.enqueue(1);
-                      }
-                  }
-              });
-          }
-          for (int i = 0; i < numWorkers; ++i) {
-              workers[i].join();
-          }
+             std::vector<std::thread> workers;
+             workers.reserve(numWorkers);
+             for (int i = 0; i < numWorkers; ++i) {
+                 workers.emplace_back([&] {
+                     for (int j = 0; j < numWorkerJobs; ++j) {
+                         if (randomBool()) {
+                             pool.enqueueDelayed(1, randomDelay());
+                         } else {
+                             pool.enqueue(1);
+                         }
+                     }
+                 });
+             }
+             for (int i = 0; i < numWorkers; ++i) {
+                 workers[i].join();
+             }
 
-          while (TestingProcessor::numProcessed()
-                 != numWorkers * numWorkerJobs) {
-              std::this_thread::sleep_for(std::chrono::milliseconds{1});
-          }
-          std::this_thread::sleep_for(std::chrono::milliseconds{100});
+             while (TestingProcessor::numProcessed()
+                    != numWorkers * numWorkerJobs) {
+                 std::this_thread::sleep_for(std::chrono::milliseconds{1});
+             }
+             std::this_thread::sleep_for(std::chrono::milliseconds{100});
 
-          expect(TestingProcessor::numProcessed(),
-                 isEqualTo(numWorkers * numWorkerJobs));
-          expect(TestingProcessor::threadIds, hasSize(3));
-          expect(TestingProcessor::threadIds,
-                 eachElement(isNotEqualTo(
-                   std::hash<std::thread::id>()(std::this_thread::get_id()))));
-          TestingProcessor::reset();
-          pool.stop();
-      });
+             expect(TestingProcessor::numProcessed(),
+                    isEqualTo(numWorkers * numWorkerJobs));
+             expect(TestingProcessor::threadIds, hasSize(3));
+             expect(TestingProcessor::threadIds,
+                    eachElement(isNotEqualTo(std::hash<std::thread::id>()(
+                      std::this_thread::get_id()))));
+             TestingProcessor::reset();
+             pool.stop();
+         });
 };

@@ -12,7 +12,6 @@ using mcga::matchers::isTrue;
 using mcga::test::expect;
 using mcga::test::test;
 using mcga::test::TestCase;
-using mcga::test::TestConfig;
 using mcga::threading::base::ThreadWrapper;
 using mcga::threading::testing::randomBool;
 
@@ -48,32 +47,35 @@ static auto t = TestCase{"ThreadWrapper"} + [] {
         expect(loop.isRunning(), isFalse);
     });
 
-    test.multiRun(10,
-                  TestConfig{.description
-                             = "Concurrent starts and stops do not break the "
-                               "ThreadWrapper",
-                             .timeTicksLimit = 10},
-                  [&] {
-                      constexpr int numWorkers = 50;
-                      constexpr int numOps = 200;
+    test(
+      {
+        .description = "Concurrent starts and stops do not break the "
+                       "ThreadWrapper",
+        .timeTicksLimit = 10,
+        .attempts = 10,
+        .requiredPassedAttempts = 10,
+      },
+      [&] {
+          constexpr int numWorkers = 50;
+          constexpr int numOps = 200;
 
-                      ThreadWrapper<BasicWorker> loop;
+          ThreadWrapper<BasicWorker> loop;
 
-                      std::vector<std::thread> workers;
-                      workers.reserve(numWorkers);
-                      for (int i = 0; i < numWorkers; ++i) {
-                          workers.emplace_back([&] {
-                              for (int j = 0; j < numOps; ++j) {
-                                  if (randomBool()) {
-                                      loop.start();
-                                  } else {
-                                      loop.stop();
-                                  }
-                              }
-                          });
+          std::vector<std::thread> workers;
+          workers.reserve(numWorkers);
+          for (int i = 0; i < numWorkers; ++i) {
+              workers.emplace_back([&] {
+                  for (int j = 0; j < numOps; ++j) {
+                      if (randomBool()) {
+                          loop.start();
+                      } else {
+                          loop.stop();
                       }
-                      for (int i = 0; i < numWorkers; ++i) {
-                          workers[i].join();
-                      }
-                  });
+                  }
+              });
+          }
+          for (int i = 0; i < numWorkers; ++i) {
+              workers[i].join();
+          }
+      });
 };
