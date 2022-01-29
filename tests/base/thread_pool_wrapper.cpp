@@ -11,7 +11,6 @@ using mcga::matchers::isFalse;
 using mcga::matchers::isTrue;
 using mcga::test::expect;
 using mcga::test::test;
-using mcga::test::TestCase;
 using mcga::threading::base::ThreadPoolWrapper;
 using mcga::threading::testing::randomBool;
 
@@ -37,7 +36,7 @@ struct BasicWorker {
 
 }  // namespace
 
-static auto t = TestCase{"ThreadPoolWrapper"} + [] {
+TEST_CASE("ThreadPoolWrapper") {
     test("Starting and stopping ThreadPoolWrapper", [&] {
         ThreadPoolWrapper<BasicWorker, std::atomic_size_t> loop(8ul);
         expect(loop.isRunning(), isFalse);
@@ -53,7 +52,6 @@ static auto t = TestCase{"ThreadPoolWrapper"} + [] {
                        "ThreadPoolWrapper",
         .timeTicksLimit = 10,
         .attempts = 10,
-        .requiredPassedAttempts = 10,
       },
       [&] {
           constexpr int numWorkers = 30;
@@ -78,4 +76,4 @@ static auto t = TestCase{"ThreadPoolWrapper"} + [] {
               workers[i].join();
           }
       });
-};
+}

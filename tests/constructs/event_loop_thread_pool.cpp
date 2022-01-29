@@ -16,7 +16,6 @@ using mcga::test::expect;
 using mcga::test::setUp;
 using mcga::test::tearDown;
 using mcga::test::test;
-using mcga::test::TestCase;
 using mcga::threading::constructs::EventLoopThreadPoolConstruct;
 using mcga::threading::testing::BasicProcessor;
 using mcga::threading::testing::randomBool;
@@ -25,14 +24,13 @@ using mcga::threading::testing::randomDelay;
 using TestingProcessor = BasicProcessor<int>;
 using EventLoopThreadPool = EventLoopThreadPoolConstruct<TestingProcessor>;
 
-static auto t = TestCase{"EventLoopThreadPool"} + [] {
+TEST_CASE("EventLoopThreadPool") {
     test(
       {
         .description
         = "Tasks enqueued in a EventLoopThreadPool are executed on "
           "multiple threads, different from the main thread",
         .attempts = 10,
-        .requiredPassedAttempts = 10,
       },
       [&] {
           constexpr int numTasks = 100000;
@@ -63,8 +61,7 @@ static auto t = TestCase{"EventLoopThreadPool"} + [] {
           = "Tasks enqueued from multiple threads in a EventLoopThreadPool"
             " are executed on multiple threads, different from the main "
             "thread",
-          .attempts = 10,
-          .requiredPassedAttempts = 10},
+          .attempts = 10},
          [&] {
              constexpr int numWorkers = 100;
              constexpr int numWorkerJobs = 1000;
@@ -104,4 +101,4 @@ static auto t = TestCase{"EventLoopThreadPool"} + [] {
              TestingProcessor::reset();
              pool.stop();
          });
-};
+}
