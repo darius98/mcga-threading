@@ -19,13 +19,6 @@ class DelayedTask {
     using Clock = std::chrono::steady_clock;
     using DelayedTaskPtr = std::shared_ptr<DelayedTask>;
 
-    class MakeSharedEnabler : public DelayedTask {
-      public:
-        MakeSharedEnabler(Task task, const Delay& delay, bool isRepeated)
-                : DelayedTask(std::move(task), delay, isRepeated) {
-        }
-    };
-
     struct Compare {
         inline bool operator()(const DelayedTaskPtr& a,
                                const DelayedTaskPtr& b) const {
@@ -33,15 +26,9 @@ class DelayedTask {
         }
     };
 
-    static DelayedTaskPtr delayed(Task task, const Delay& delay) {
-        return std::make_shared<MakeSharedEnabler>(
-          std::move(task), delay, false);
-    }
-
-    static DelayedTaskPtr interval(Task task, const Delay& delay) {
-        return std::make_shared<MakeSharedEnabler>(
-          std::move(task), delay, true);
-    }
+    class MakeSharedEnabler;
+    static DelayedTaskPtr delayed(Task task, const Delay& delay);
+    static DelayedTaskPtr interval(Task task, const Delay& delay);
 
     DelayedTask(Task task, const Delay& delay, bool isRepeated)
             : task(std::move(task)), delay(delay), isRepeated(isRepeated) {
@@ -74,5 +61,25 @@ class DelayedTask {
     template<class Processor>
     friend class DelayedQueueWrapper;
 };
+
+template<class Task>
+class DelayedTask<Task>::MakeSharedEnabler : public DelayedTask<Task> {
+  public:
+    MakeSharedEnabler(Task task, const Delay& delay, bool isRepeated)
+            : DelayedTask(std::move(task), delay, isRepeated) {
+    }
+};
+
+template<class Task>
+auto DelayedTask<Task>::delayed(Task task, const Delay& delay)
+  -> DelayedTaskPtr {
+    return std::make_shared<MakeSharedEnabler>(std::move(task), delay, false);
+}
+
+template<class Task>
+auto DelayedTask<Task>::interval(Task task, const Delay& delay)
+  -> DelayedTaskPtr {
+    return std::make_shared<MakeSharedEnabler>(std::move(task), delay, true);
+}
 
 }  // namespace mcga::threading::base

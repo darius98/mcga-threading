@@ -14,7 +14,7 @@ class DelayedQueueWrapper {
     using Task = typename Processor::Task;
 
   private:
-    using DelayedTask = DelayedTask<Task>;
+    using DelayedTask = ::mcga::threading::base::DelayedTask<Task>;
     using Clock = typename DelayedTask::Clock;
 
   public:
