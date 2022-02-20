@@ -10,6 +10,13 @@ option(MCGA_threading_benchmarks "Build MCGA Threading benchmarks" OFF)
 option(MCGA_threading_benchmark_against_evpp "Include the evpp library's EventLoop and EventLoopPool in the MCGA Threading benchmark" OFF)
 option(MCGA_threading_examples "Build MCGA Threading examples" OFF)
 
+if (SANITIZER_COMPILE_OPTIONS)
+    add_compile_options(${SANITIZER_COMPILE_OPTIONS})
+endif ()
+if (SANITIZER_LINK_OPTIONS)
+    add_link_options(${SANITIZER_LINK_OPTIONS})
+endif ()
+
 include(FindThreads)
 
 add_library(mcga_threading INTERFACE)
