@@ -21,7 +21,7 @@ include(FindThreads)
 
 add_library(mcga_threading INTERFACE)
 target_include_directories(mcga_threading
-        INTERFACE third_party/concurrentqueue
+        INTERFACE SYSTEM third_party/concurrentqueue
         INTERFACE include
         )
 target_link_libraries(mcga_threading INTERFACE ${CMAKE_THREAD_LIBS_INIT})
