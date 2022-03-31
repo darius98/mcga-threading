@@ -9,8 +9,6 @@
 
 using mcga::matchers::isFalse;
 using mcga::matchers::isTrue;
-using mcga::test::expect;
-using mcga::test::test;
 using mcga::threading::base::ThreadWrapper;
 using mcga::threading::testing::randomBool;
 
