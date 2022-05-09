@@ -74,7 +74,7 @@ class ThreadWrapper : public ThreadWrapperBase<W> {
 
     template<class... Args>
     explicit ThreadWrapper(Args&&... args)
-            : processor(std::forward<Args>(args)...), started(false) {
+            : started(false), processor(std::forward<Args>(args)...) {
     }
 
     ThreadWrapper(const ThreadWrapper&) = delete;
